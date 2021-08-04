@@ -20,10 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The original source and a lot of explanations can be found at:
 https://www.parallelrealities.co.uk/tutorials/#Shooter
 converted from "C" to "Pascal" by Ulrich 2021
-***************************************************************************}
 
-PROGRAM Shooter16;
-{**************************************************************************
+***************************************************************************
 -NEW / DISPOSE fehlerfrei, kommt zu Null !
 -drawHighScore repariert
 -C Opertoren += -= *= abgeschaltet
@@ -38,8 +36,11 @@ PROGRAM Shooter16;
 -loadsound errormeldungen korrigiert
 -Errormessage erweitert um Sound-Fehlermeldungen
 -Numberfill optomiert mit Format-Befehl Freepascal
+-Logodraw optimiert
+-Sound & Musiklautstaerke mit Variablen gesteuert
 ***************************************************************************}
 
+PROGRAM Shooter16;
 {$COPERATORS OFF}
 USES SDL2, SDL2_Image, SDL2_Mixer, Math, sysutils;
 
@@ -156,6 +157,8 @@ VAR app                  : S_App;
     exitLoop             : BOOLEAN;
     gTicks               : UInt32;
     gRemainder           : double;
+    MusicVol,
+    SoundVol,
     reveal,
     reveal_max,
     timeout,
@@ -268,7 +271,12 @@ begin
   sounds[5] := Mix_LoadWAV('sound/342749__rhodesmas__notification-01.ogg');
   if sounds[5] = NIL then errorMessage('Soundfile "342749__rhodesmas__notification-01.ogg" not found!');
 
-  Mix_VolumeChunk(sounds[1], MIX_MAX_VOLUME);
+  SoundVol := 16;  {MIX_MAX_Volume}              {initialize}
+  Mix_VolumeChunk(sounds[1], SoundVol);          {MIX_MAX_VOLUME = 128 !!!}
+  Mix_VolumeChunk(sounds[2], SoundVol);
+  Mix_VolumeChunk(sounds[3], SoundVol);
+  Mix_VolumeChunk(sounds[4], SoundVol);
+  Mix_VolumeChunk(sounds[5], SoundVol);
 end;
 
 procedure loadMusic;
@@ -281,7 +289,8 @@ begin
   end;
   music := Mix_LoadMUS('music/Mercury.ogg');
   if music = NIL then errorMessage('Music: "Mercury.ogg" not found!');
-  Mix_VolumeMusic(MIX_MAX_VOLUME);
+  MusicVol := 32;  {MIX_MAX_VOLUME}              {initialize}
+  Mix_VolumeMusic(MusicVol);                     {MIX_MAX_VOLUME = 128 !!!}
 end;
 
 procedure playMusic(play : BOOLEAN);
@@ -1227,9 +1236,11 @@ end;
 
 //*****************  TITLE  **********************
 
-procedure drawLogo;
+procedure draw_Title;
 VAR r : TSDL_Rect;
 begin
+  drawBackground;
+  drawStarfield;
   r.x := 0;
   r.y := 0;
   SDL_QueryTexture(SDL2Texture, NIL, NIL, @r.w, @r.h);
@@ -1238,13 +1249,6 @@ begin
   SDL_QueryTexture(shooterTexture, NIL, NIL, @r.w, @r.h);
   r.h := MIN(reveal, r.h);
   blitRect(shooterTexture, @r, (SCREEN_WIDTH DIV 2) - (r.w DIV 2), 250);
-end;
-
-procedure draw_Title;
-begin
-  drawBackground;
-  drawStarfield;
-  drawLogo;
   if (timeout MOD 40) < 20 then
     drawText(SCREEN_WIDTH DIV 2, 600, 255, 255, 255, TEXT_CENTER, 'PRESS FIRE TO PLAY!');
 end;

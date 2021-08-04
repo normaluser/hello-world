@@ -20,9 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The original source and a lot of explanations can be found at:
 https://www.parallelrealities.co.uk/tutorials/#Shooter
 converted from "C" to "Pascal" by Ulrich 2021
-***************************************************************************}
+***************************************************************************
 
-{**************************************************************************
 -NEW / DISPOSE fehlerfrei, kommt zu Null !
 -drawHighScore repariert
 -C Opertoren += -= *= abgeschaltet
@@ -38,7 +37,7 @@ converted from "C" to "Pascal" by Ulrich 2021
 -Errormessage erweitert um Sound-Fehlermeldungen
 -Numberfill optimiert mit Format-Befehl Freepascal
 -Logo Draw optimiert
--Menu fueÅr Sound & Musik eingebaut
+-Menu fuer Sound & Musik eingebaut
 ***************************************************************************}
 
 PROGRAM Shooter17;
