@@ -58,7 +58,7 @@ CONST SCREEN_WIDTH  = 1280;
       SIDE_ALIEN = 1;
       FPS = 60;
       MAX_STARS = 500;
-      MAX_Menu = 3;     { 3 Eintraege }
+      MAX_Menu = 4;     { 4 Eintraege }
 
       MAX_SND_CHANNELS = 8;
       SND_PLAYER_FIRE  = 1;
@@ -165,9 +165,6 @@ VAR app                  : S_App;
     bMenue,
     exitLoop             : BOOLEAN;
     gTicks               : UInt32;
-    gRemainder           : double;
-    MusicVol,
-    SoundVol,
     reveal,
     reveal_max,
     timeout,
@@ -175,13 +172,16 @@ VAR app                  : S_App;
     backgroundX,
     enemyspawnTimer,
     resetTimer           : integer;
-    C                    : byte;
     PM                   : ARRAY[1..MAX_Menu + 1] of M_place;
     stars                : Array[0..MAX_STARS] OF S_Star;
     music                : PMix_Music;
     sounds               : Array[1..SND_MAX] OF PMix_Chunk;
     HighScores           : HighScoreArray;
     newHighScore         : HighScoreDef;
+    SoundVol             : integer = 16;
+    MusicVol             : integer = 32;
+    gRemainder           : double = 0;
+    C                    : byte = 1;
 
 // *****************   INIT   *****************
 
@@ -282,7 +282,7 @@ begin
   sounds[5] := Mix_LoadWAV('sound/342749__rhodesmas__notification-01.ogg');
   if sounds[5] = NIL then errorMessage('Soundfile "342749__rhodesmas__notification-01.ogg" not found!');
 
-  SoundVol := 15;  {MIX_MAX_Volume}              {initialize}
+    {MIX_MAX_Volume}              {initialize}
   Mix_VolumeChunk(sounds[1], SoundVol);          {MIX_MAX_VOLUME = 128 !!!}
   Mix_VolumeChunk(sounds[2], SoundVol);
   Mix_VolumeChunk(sounds[3], SoundVol);
@@ -301,7 +301,7 @@ begin
   music := Mix_LoadMUS('music/Mercury.ogg');
   if music = NIL then errorMessage('Music: "Mercury.ogg" not found!');
 
-  MusicVol := 30;  {MIX_MAX_VOLUME}              {initialize}
+  MusicVol := 32;  {MIX_MAX_VOLUME}              {initialize}
   Mix_VolumeMusic(MusicVol);                     {MIX_MAX_VOLUME = 128 !!!}
 end;
 
@@ -1310,8 +1310,8 @@ begin
       initTitle;
     if (app.keyboard[SDL_ScanCode_LCTRL] = 1) then
       initStage;
-    if (app.keyboard[SDL_ScanCode_DELETE] = 1) then
-      emptyHighScore;
+//    if (app.keyboard[SDL_ScanCode_DELETE] = 1) then
+//      emptyHighScore;
   end;
   INC(cursorBlink);
   if cursorBlink >= FPS then
@@ -1329,7 +1329,7 @@ begin
     drawHighScores;
     if ((timeout MOD 40) < 20) then
       drawText(SCREEN_WIDTH DIV 2, 600, 255, 255, 255, TEXT_CENTER, 'PRESS FIRE TO PLAY!');
-    drawText(SCREEN_WIDTH DIV 2, 650, 255, 255, 255, TEXT_CENTER, 'PRESS DEL TO RESET HIGHSCORE!');
+//    drawText(SCREEN_WIDTH DIV 2, 650, 255, 255, 255, TEXT_CENTER, 'PRESS DEL TO RESET HIGHSCORE!');
   end;
 end;
 
@@ -1341,14 +1341,26 @@ begin
   doStarfield;
   if (app.keyboard[SDL_ScanCode_UP]   = 1) then DEC(C);
   if (app.keyboard[SDL_ScanCode_DOWN] = 1) then INC(C);
+  //C := MIN(MAX(C, 1), MAX_Menu);
+  if C < 1 then C := MAX_Menu;
+  if C > Max_Menu then C := 1;
 
-  if ((app.keyboard[SDL_ScanCode_LEFT]  = 1) AND (C = 1)) then DEC(SoundVol, 5);
-  if ((app.keyboard[SDL_ScanCode_RIGHT] = 1) AND (C = 1)) then INC(SoundVol, 5);
-  if ((app.keyboard[SDL_ScanCode_LEFT]  = 1) AND (C = 2)) then DEC(MusicVol, 5);
-  if ((app.keyboard[SDL_ScanCode_RIGHT] = 1) AND (C = 2)) then INC(MusicVol, 5);
-  C := MIN(MAX(C, 1), MAX_Menu);
+  if ((app.keyboard[SDL_ScanCode_LEFT]  = 1) AND (C = 1)) then DEC(SoundVol, 4);
+  if ((app.keyboard[SDL_ScanCode_RIGHT] = 1) AND (C = 1)) then INC(SoundVol, 4);
+  if ((app.keyboard[SDL_ScanCode_LEFT]  = 1) AND (C = 2)) then DEC(MusicVol, 4);
+  if ((app.keyboard[SDL_ScanCode_RIGHT] = 1) AND (C = 2)) then INC(MusicVol, 4);
+
+  if ((app.keyboard[SDL_ScanCode_DELETE] = 1) AND (C = 3)) then   { DEL Highscore }
+  begin
+    c := 1;
+    timeout := FPS * 5;
+    bMenue := FALSE;                                     { no Menue active now }
+    emptyHighScore;
+    app.delegate.logic := Highsc;                        { reset the old state of Logic }
+    app.delegate.draw  := Highsc;                        { reset the old state of Draw }
+  end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1)
-    OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (C = 3)) then { leave the Menu }
+    OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (C = MAX_Menu)) then { leave the Menu }
   begin
     C := 1;
     bMenue := FALSE;                                     { no Menue active now }
@@ -1356,9 +1368,9 @@ begin
     app.delegate.draw  := app.r_delegate.draw;           { reset the old state of Draw }
   end;
   FillChar(app.keyboard, SizeOf(app.Keyboard), 0);       { empty keyboard puffer }
-  SoundVol := MIN(MAX(SoundVol, 0), 125);
-  MusicVol := MIN(MAX(MusicVol, 0), 125);
-  Mix_VolumeChunk(sounds[1], SoundVol);          {MIX_MAX_VOLUME = 128 !!!}
+  SoundVol := MIN(MAX(SoundVol, 0), 128);
+  MusicVol := MIN(MAX(MusicVol, 0), 128);
+  Mix_VolumeChunk(sounds[1], SoundVol);                  { MIX_MAX_VOLUME = 128 !!! }
   Mix_VolumeChunk(sounds[2], SoundVol);
   Mix_VolumeChunk(sounds[3], SoundVol);
   Mix_VolumeChunk(sounds[4], SoundVol);
@@ -1366,38 +1378,60 @@ begin
   Mix_VolumeMusic(MusicVol);
 end;
 
-procedure draw_Menue;
-VAR i : byte;
+procedure draw_Bar(a : TSDL_Rect; wwith, vol, max : integer);
 begin
-  PM[1].x := SCREEN_WIDTH DIV 2; PM[1].y := 200;
-  PM[2].x := SCREEN_WIDTH DIV 2; PM[2].y := 280;
-  PM[3].x := SCREEN_WIDTH DIV 2; PM[3].y := 360;
-  PM[4].x := SCREEN_WIDTH DIV 2; PM[4].y := SCREEN_HEIGHT - 50;
-  PM[1].Text := 'SOUND VOLUME:'; PM[1].HText := 'PRESS ARROW-KEYS TO CHANGE SOUND VOLUME!';
-  PM[2].Text := 'MUSIC VOLUME:'; PM[2].HText := 'PRESS ARROW-KEYS TO CHANGE MUSIC VOLUME!';
-  PM[3].Text := 'BACK TO GAME!'; PM[3].HText := 'PRESS SPACE OR ENTER TO PLAY GAME!';
+  a.w := round((wwith - 4) * vol / max);                          { Dreisatz zur Balkenbreite }
+  SDL_SetRenderDrawColor(app.renderer, 0, 255, 0, 255);           { gruen }
+  SDL_RenderFillRect(app.renderer, @a);                           { Volume }
+  a.x := a.x - 2; a.y := a.y - 2;
+  a.w := wwith;   a.h := a.h + 4;
+  SDL_SetRenderDrawColor(app.renderer, 255, 255, 255, 255);       { weiss }
+  SDL_RenderDrawRect(app.renderer, @a);                           { Umrandung }
+end;
+
+procedure draw_Menue;
+VAR i, k : byte;
+    r : TSDL_Rect;
+begin
+  k := Max_Menu + 1;
+  PM[1].x := SCREEN_WIDTH DIV 2;   PM[1].y := 200;
+  PM[2].x := PM[1].x;              PM[2].y := 280;
+  PM[3].x := PM[1].x;              PM[3].y := 360;
+  PM[4].x := PM[1].x;              PM[4].y := 440;
+  PM[k].x := PM[1].x;              PM[k].y := SCREEN_HEIGHT - 50;                         { Hilfstext }
+  PM[1].Text := 'SOUND VOLUME:';   PM[1].HText := 'PRESS ARROW-KEYS TO CHANGE SOUND VOLUME!';
+  PM[2].Text := 'MUSIC VOLUME:';   PM[2].HText := 'PRESS ARROW-KEYS TO CHANGE MUSIC VOLUME!';
+  PM[3].Text := 'RESET HIGHSCORE'; PM[3].HText := 'PRESS DEL TO RESET THE HIGHSCORE';
+  PM[4].Text := 'BACK TO GAME!';   PM[4].HText := 'PRESS SPACE OR ENTER TO PLAY GAME!';
+
 
   drawBackGround;
   drawStarfield;
-  drawText(PM[C].x - 180, PM[C].y, 0, 255, 0, TEXT_CENTER, '>');                        { gruener Cursor }
-  for i := 1 to Max_Menu do
+  drawText(PM[C].x - 170, PM[C].y, 0, 255, 0, TEXT_CENTER, '>');                        { gruener Cursor }
+  for i := 1 to Max_Menu do                                                             { schreibe Menue }
   begin
     if i = C then
     begin
       PM[i].r := 0; PM[i].g := 255; PM[i].b := 0;                                       { gruener Text }
-      drawText(PM[i].x -  40, PM[i].y, PM[i].r, PM[i].g, PM[i].b, TEXT_CENTER, PM[i].Text);
+      drawText(PM[i].x - 155, PM[i].y, PM[i].r, PM[i].g, PM[i].b, TEXT_LEFT, PM[i].Text);
     end
     else
     begin
       PM[i].r := 255; PM[i].g := 255; PM[i].b := 255;                                   { weisser Text }
-      drawText(PM[i].x -  40, PM[i].y, PM[i].r, PM[i].g, PM[i].b, TEXT_CENTER, PM[i].Text);
+      drawText(PM[i].x - 155, PM[i].y, PM[i].r, PM[i].g, PM[i].b, TEXT_LEFT, PM[i].Text);
     end;
   end;
 
-  drawText(PM[1].x + 140, PM[1].y, 255, 255, 255, TEXT_CENTER, NumberFill(SoundVol));   { Sound Volumen als Zahl }
-  drawText(PM[2].x + 140, PM[2].y, 255, 255, 255, TEXT_CENTER, NumberFill(MusicVol));   { Music Volumen als Zahl }
+  drawText(PM[k].x, PM[k].y, 255, 255, 255, TEXT_CENTER, PM[C].HText);                  { Hilfstext Anzeige }
 
-  drawText(PM[4].x,       PM[4].y, 255, 255, 255, TEXT_CENTER, PM[C].HText);            { Hilfstext Anzeige }
+  r.x := PM[1].x + 90; r.y := 190; r.w := 260; r.h :=  40;
+  draw_Bar(r, 284, SoundVol, MIX_MAX_VOLUME );
+
+  r.x := PM[1].x + 90; r.y := 270; r.w := 260; r.h :=  40;
+  draw_Bar(r, 284, MusicVol, MIX_MAX_VOLUME);
+
+  drawText(PM[1].x + 240, PM[1].y, 255, 255, 255, TEXT_CENTER, NumberFill(SoundVol));   { Sound Volumen als Zahl }
+  drawText(PM[2].x + 240, PM[2].y, 255, 255, 255, TEXT_CENTER, NumberFill(MusicVol));   { Music Volumen als Zahl }
 end;
 
 // ***************   INIT SDL   ***************
@@ -1430,13 +1464,11 @@ end;
 
 procedure initGame;
 begin
-  C                := 1;
   app.inputText    := '';
   newHighScoreFlag := FALSE;
   exitLoop         := FALSE;
   bMenue           := FALSE;
   gTicks           := SDL_GetTicks;
-  gRemainder       := 0;
   music            := NIL;
   initStageListenPointer;
   initBackground;
