@@ -1508,13 +1508,18 @@ begin
   for i := 5 downto 1 do
     Mix_FreeChunk(sounds[i]);
   Mix_FreeMusic(music);
-  Mix_CloseAudio;
+end;
 
+procedure AtExit;
+begin
+  Mix_CloseAudio;
   SDL_DestroyRenderer(app.Renderer);
   SDL_DestroyWindow (app.Window);
   MIX_Quit;   { Quits the Music / Sound }
   IMG_Quit;   { Quits the SDL_Image }
   SDL_Quit;   { Quits the SDL }
+  if Exitcode <> 0 then WriteLn(SDL_GetError());
+  SDL_ShowCursor(1);
 end;
 
 // *************   DELEGATE LOGIC   ***********
@@ -1597,6 +1602,7 @@ end;
 begin
   RANDOMIZE;
   InitSDL;
+  AddExitProc(@AtExit);
   initGame;
   initTitle;
   NEW(event);
@@ -1608,7 +1614,7 @@ begin
     presentScene;
     CapFrameRate(gRemainder, gTicks);
   end;
-  DISPOSE(event);
   cleanUp;
-  SDL_ShowCursor(1);
+  DISPOSE(Event);
+  AtExit;
 end.
