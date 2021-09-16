@@ -44,7 +44,7 @@ CONST SCREEN_WIDTH  = 1280;
       SIDE_ALIEN = 1;
       FPS = 60;
       MAX_STARS = 500;
-      MAX_Menu = 5;     { 4 Eintraege }
+      MAX_Menu = 5;            { 4 Eintraege }
 
       MAX_SND_CHANNELS = 8;
       SND_PLAYER_FIRE  = 1;
@@ -1232,6 +1232,7 @@ end;
 //*****************  TITLE  **********************
 
 procedure draw_Title;
+CONST Title_Menue = 3;
 VAR r : TSDL_Rect;
     i : byte;
 begin
@@ -1253,7 +1254,7 @@ begin
 //    drawText(SCREEN_WIDTH DIV 2, 480, 255, 255, 255, TEXT_CENTER, 'GAME');
 //  drawText(SCREEN_WIDTH DIV 2, 540, 255, 255, 255, TEXT_CENTER, 'OPTIONS');
 //  drawText(SCREEN_WIDTH DIV 2, 600, 255, 255, 255, TEXT_CENTER, 'QUIT');
-  for i := 1 to Max_Menu do                                                             { schreibe Menue }
+  for i := 1 to Title_Menue do                                                           { schreibe Menue }
   begin
     if i = Auswahl then
     begin
@@ -1293,10 +1294,16 @@ begin
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1) OR (app.keyboard[SDL_ScanCode_KP_ENTER] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 2)) then  { options }
   begin
-    Auswahl := 1;                                                       { Menue set to 1 }
-    app.delegate.logic := menues;                                       { reset the old state of Logic }
-    app.delegate.draw  := menues;                                       { reset the old state of Draw }
-    bMenue := TRUE;  //#################################################################################
+    app.r_delegate.logic := app.delegate.logic;  { save the old state }
+    app.r_delegate.draw  := app.delegate.draw;   { save the old state }
+    app.delegate.logic := Menues;                { switch to menue }
+    app.delegate.draw  := Menues;                { switch to menue }
+    bMenue := FALSE;                              { menue is active now }
+
+//    Auswahl := 1;                                                       { Menue set to 1 }
+//    app.delegate.logic := menues;                                       { reset the old state of Logic }
+//    app.delegate.draw  := menues;                                       { reset the old state of Draw }
+//    bMenue := TRUE;  //#################################################################################
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1) OR (app.keyboard[SDL_ScanCode_KP_ENTER] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 3)) then  { exit game }
@@ -1384,6 +1391,7 @@ begin
     app.delegate.logic := Highsc;                                       { switch to Highscore logic }
     app.delegate.draw  := Highsc;                                       { switch to Highscore draw  }
   end;
+
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1) OR (app.keyboard[SDL_ScanCode_KP_ENTER] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 4)) then  { leave the Menu }
   begin
@@ -1392,6 +1400,7 @@ begin
     app.delegate.logic := app.r_delegate.logic;                         { reset the old state of Logic }
     app.delegate.draw  := app.r_delegate.draw;                          { reset the old state of Draw }
   end;
+
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1) OR (app.keyboard[SDL_ScanCode_KP_ENTER] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = MAX_Menu)) then { EXIT the Game }
     exitloop := true;
@@ -1414,7 +1423,7 @@ begin
   SDL_SetRenderDrawColor(app.renderer, 0, 255, 0, 255);                 { gruen }
   SDL_RenderFillRect(app.renderer, @a);                                 { Volume }
   a.x := a.x - 3;   a.y := a.y - 3;
-  a.w := wwith + 2; a.h := a.h + 6;
+  a.w := wwith + 3; a.h := a.h + 6;
   SDL_SetRenderDrawColor(app.renderer, 255, 255, 255, 255);             { weiss }
   SDL_RenderDrawRect(app.renderer, @a);                                 { Umrandung }
 end;
