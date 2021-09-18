@@ -1250,19 +1250,19 @@ begin
   SDL_QueryTexture(shooterTexture, NIL, NIL, @r.w, @r.h);
   r.h := MIN(reveal, r.h);
   blitRect(shooterTexture, @r, (SCREEN_WIDTH DIV 2) - (r.w DIV 2), 250);
-//  if (timeout MOD 40) < 20 then
-//    drawText(SCREEN_WIDTH DIV 2, 480, 255, 255, 255, TEXT_CENTER, 'GAME');
-//  drawText(SCREEN_WIDTH DIV 2, 540, 255, 255, 255, TEXT_CENTER, 'OPTIONS');
-//  drawText(SCREEN_WIDTH DIV 2, 600, 255, 255, 255, TEXT_CENTER, 'QUIT');
+
   for i := 1 to Title_Menue do                                                           { schreibe Menue }
   begin
     if i = Auswahl then
     begin
       if (timeout MOD 40) < 20 then
-        drawText(PM[i].x, PM[i].y, 0, 255, 0, TEXT_CENTER, PM[i].Text)                  { gruener Text }
+      begin
+        drawText(PM[i].x - 110, PM[i].y, 0, 255, 0, TEXT_LEFT, '>');                  { gruener Cursor }
+        drawText(PM[i].x - 80,  PM[i].y, 0, 255, 0, TEXT_LEFT, PM[i].Text)                  { gruener Text }
+      end;
     end
     else
-      drawText(PM[i].x, PM[i].y, 255, 255, 255, TEXT_CENTER, PM[i].Text);               { weisser Text }
+      drawText(PM[i].x - 80, PM[i].y, 255, 255, 255, TEXT_LEFT, PM[i].Text);               { weisser Text }
   end;
 end;
 
@@ -1271,8 +1271,8 @@ VAR rep : boolean;
 begin
   doBackGround;
   doStarfield;
-  if (app.keyboard[SDL_ScanCode_UP]   = 1) then begin DEC(Auswahl); rep := FALSE; end;
-  if (app.keyboard[SDL_ScanCode_DOWN] = 1) then begin INC(Auswahl); rep := FALSE; end;
+  if (app.keyboard[SDL_ScanCode_UP]   = 1) then begin DEC(Auswahl); rep := FALSE; timeout := FPS * 5; end;
+  if (app.keyboard[SDL_ScanCode_DOWN] = 1) then begin INC(Auswahl); rep := FALSE; timeout := FPS * 5; end;
   if Auswahl < 1 then Auswahl := MAX_Menu;
   if Auswahl > Max_Menu then Auswahl := 1;
   if (rep = FALSE) then FillChar(app.keyboard, SizeOf(app.Keyboard), 0);       { empty keyboard puffer }
@@ -1299,16 +1299,10 @@ begin
     app.delegate.logic := Menues;                { switch to menue }
     app.delegate.draw  := Menues;                { switch to menue }
     bMenue := FALSE;                              { menue is active now }
-
-//    Auswahl := 1;                                                       { Menue set to 1 }
-//    app.delegate.logic := menues;                                       { reset the old state of Logic }
-//    app.delegate.draw  := menues;                                       { reset the old state of Draw }
-//    bMenue := TRUE;  //#################################################################################
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1) OR (app.keyboard[SDL_ScanCode_KP_ENTER] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 3)) then  { exit game }
   begin
-    Auswahl := 1;                                                       { Menue set to 1 }
     exitloop := true;
   end;
 end;
@@ -1360,8 +1354,7 @@ begin
   begin
     drawHighScores;
     if ((timeout MOD 40) < 20) then
-      drawText(SCREEN_WIDTH DIV 2, 600, 255, 255, 255, TEXT_CENTER, 'PRESS FIRE TO PLAY!');
-   {  drawText(SCREEN_WIDTH DIV 2, 650, 255, 255, 255, TEXT_CENTER, 'PRESS DEL TO RESET HIGHSCORE!');  }
+      drawText(SCREEN_WIDTH DIV 2, 600, 0, 255, 0, TEXT_CENTER, 'PRESS FIRE TO PLAY!');
   end;
 end;
 
@@ -1447,6 +1440,8 @@ begin
 
   drawBackGround;
   drawStarfield;
+//  DEC(timeout);
+
   for i := 1 to Max_Menu do                                                             { schreibe Menue }
   begin
     if i = Auswahl then
@@ -1457,15 +1452,17 @@ begin
     else
       drawText(PM[i].x - 155, PM[i].y, 255, 255, 255, TEXT_LEFT, PM[i].Text);           { weisser Text }
   end;
-  drawText(PM[k].x, PM[k].y, 255, 255, 255, TEXT_CENTER, PM[Auswahl].HText);            { Hilfstext Anzeige }
+//  if (timeout MOD 40) < 20 then
+    drawText(PM[k].x, PM[k].y, 255, 255, 255, TEXT_CENTER, PM[Auswahl].HText);          { Hilfstext Anzeige }
+//  if timeout < 0 then timeout := FPS * 5;
 
   r.x := PM[1].x + 90; r.y := 190; r.w := 260; r.h :=  40;                              { Balkenanzeige }
   draw_Bar(r, 284, SoundVol, MIX_MAX_VOLUME);
   r.x := PM[1].x + 90; r.y := 270; r.w := 260; r.h :=  40;
   draw_Bar(r, 284, MusicVol, MIX_MAX_VOLUME);
 
-  drawText(PM[1].x + 240, PM[1].y, 255, 255, 255, TEXT_CENTER, NumberFill(SoundVol*100 div 128));   { Sound Volumen in % }
-  drawText(PM[2].x + 240, PM[2].y, 255, 255, 255, TEXT_CENTER, NumberFill(MusicVol*100 div 128));   { Music Volumen in % }
+  drawText(PM[1].x + 240, PM[1].y, 255, 255, 255, TEXT_CENTER, NumberFill(SoundVol * 100 div 128));   { Sound Volumen in % }
+  drawText(PM[2].x + 240, PM[2].y, 255, 255, 255, TEXT_CENTER, NumberFill(MusicVol * 100 div 128));   { Music Volumen in % }
   drawText(PM[1].x + 260, PM[1].y, 255, 255, 255, TEXT_LEFT, '%');
   drawText(PM[2].x + 260, PM[2].y, 255, 255, 255, TEXT_LEFT, '%');
 end;
