@@ -45,6 +45,7 @@ CONST SCREEN_WIDTH  = 1280;            { size of the grafic window }
       FPS = 60;
       MAX_STARS = 500;
       MAX_Menu = 5;            { 4 Eintraege }
+      Title_Menue = 3;
 
       MAX_SND_CHANNELS = 8;
       SND_PLAYER_FIRE  = 1;
@@ -1241,7 +1242,7 @@ end;
 //*****************  TITLE  **********************
 
 procedure draw_Title;
-CONST Title_Menue = 3;
+//CONST Title_Menue = 3;
 VAR r : TSDL_Rect;
     i : byte;
 begin
@@ -1276,14 +1277,15 @@ begin
 end;
 
 procedure logic_Title;
+//CONST Title_Menue = 3;
 VAR rep : boolean;
 begin
   doBackGround;
   doStarfield;
   if (app.keyboard[SDL_ScanCode_UP]   = 1) then begin DEC(Auswahl); rep := FALSE; timeout := FPS * 5; end;
   if (app.keyboard[SDL_ScanCode_DOWN] = 1) then begin INC(Auswahl); rep := FALSE; timeout := FPS * 5; end;
-  if Auswahl < 1 then Auswahl := MAX_Menu;
-  if Auswahl > Max_Menu then Auswahl := 1;
+  if Auswahl < 1 then Auswahl := Title_Menue;
+  if Auswahl > Title_Menue then Auswahl := 1;
   if (rep = FALSE) then FillChar(app.keyboard, SizeOf(app.Keyboard), 0);       { empty keyboard puffer }
 
   if (reveal < reveal_max) then
@@ -1307,7 +1309,7 @@ begin
     app.r_delegate.draw  := app.delegate.draw;   { save the old state }
     app.delegate.logic := Menues;                { switch to menue }
     app.delegate.draw  := Menues;                { switch to menue }
-    bMenue := FALSE;                              { menue is active now }
+    bMenue := FALSE;                             { menue is active now }
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1) OR (app.keyboard[SDL_ScanCode_KP_ENTER] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 3)) then  { exit game }
