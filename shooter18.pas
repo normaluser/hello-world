@@ -22,7 +22,7 @@ https://www.parallelrealities.co.uk/tutorials/#Shooter
 converted from "C" to "Pascal" by Ulrich 2021
 ***************************************************************************
 -Menu fuer Sound & Musik eingebaut
--Menu im Startbildschirm noch ohne Funktion
+-Menu zusammenfassen und als Function / Procedure gestalten
 -@atExit Procedure installiert
 ***************************************************************************}
 
