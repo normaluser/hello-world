@@ -160,7 +160,7 @@ VAR app                  : TApp;
     shooterTexture,
     background,
     explosionTexture     : PSDL_Texture;
-    Event                : PSDL_EVENT;
+    Event                : TSDL_EVENT;
     newHighScoreFlag,
     bMenue,
     exitLoop             : BOOLEAN;
@@ -1477,7 +1477,6 @@ begin
   initHighScoreTable;
   loadMusic;
   playMusic(TRUE);
-  NEW(Event);
 end;
 
 procedure destroyTexture;
@@ -1496,7 +1495,6 @@ end;
 procedure cleanUp;
 VAR i : byte;
 begin
-  DISPOSE(Event);
   writeHighScore;
   resetStage;
   if stage.fighterHead   <> NIL then DISPOSE(stage.fighterHead);
@@ -1555,16 +1553,16 @@ end;
 procedure doInput;
 begin
   app.inputText := '';
-  while SDL_PollEvent(Event) = 1 do
+  while SDL_PollEvent(@Event) = 1 do
   begin
-    CASE Event^.Type_ of
+    CASE Event.Type_ of
 
       SDL_QUITEV:          exitLoop := TRUE;                        { close Window }
       SDL_MOUSEBUTTONDOWN: exitLoop := TRUE;                        { if Mousebutton pressed }
 
       SDL_KEYDOWN: begin
-                     if ((Event^.key._repeat = 0) AND (Event^.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
-                       app.keyboard[Event^.key.keysym.scancode] := 1;
+                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
+                       app.keyboard[Event.key.keysym.scancode] := 1;
                      if ((app.keyboard[SDL_ScanCode_ESCAPE] = 1) AND (bMenue = FALSE)) then
                      begin
                        app.r_delegate.logic := app.delegate.logic;  { save the old state }
@@ -1576,11 +1574,11 @@ begin
                    end;   { SDL_Keydown }
 
       SDL_KEYUP:   begin
-                     if ((Event^.key._repeat = 0) AND (Event^.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
-                       app.keyboard[Event^.key.keysym.scancode] := 0;
+                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
+                       app.keyboard[Event.key.keysym.scancode] := 0;
                    end;   { SDL_Keyup }
       SDL_TEXTINPUT: begin
-                       app.inputText := app.inputText + Event^.text.text;
+                       app.inputText := app.inputText + Event.Text.text;
                      end;
     end;  { CASE Event }
   end;    { SDL_PollEvent }
