@@ -83,7 +83,7 @@ TYPE                                        { "T" short for "TYPE" }
                      textureHead, textureTail : PTextur;
                      inputText : String;
                      delegate : TDelegate;
-                     r_delegate : TDelegate;      { "R_" = short for Resent Value }
+                     r_delegate : TDelegate;      { "R_" = short for Recent Value }
                    end;
      PEntity     = ^TEntity;
      TEntity     = RECORD
@@ -1297,7 +1297,7 @@ begin
     reveal := 0;
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1) OR (app.keyboard[SDL_ScanCode_KP_ENTER] = 1)
-    OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 1)) then  { play game }
+    OR (app.keyboard[SDL_ScanCode_SPACE] = 1) OR (app.keyboard[SDL_ScanCode_LCTRL] = 1)) AND (Auswahl = 1)) then  { play game }
   begin
     Auswahl := 1;                                                       { Menue set to 1 }
     initStage;

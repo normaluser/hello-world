@@ -96,7 +96,7 @@ TYPE                                        { "T" short for "TYPE" }
                      textureHead, textureTail : PTextur;
                      inputText : String;
                      delegate : TDelegate;
-                     r_delegate : TDelegate;      { "R_" = short for Resent Value }
+                     r_delegate : TDelegate;      { "R_" = short for Recent Value }
                    end;
      PEntity     = ^TEntity;
      TEntity     = RECORD
