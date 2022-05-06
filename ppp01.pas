@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ***************************************************************************
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
-* Loadtiles: Eine for Schleife mit intToStr(i) zur Dateinamensbildung 
-* funktioniert irgendwie nicht... 
+* Loadtiles: Eine for Schleife mit intToStr(i) zur Dateinamensbildung
+* funktioniert irgendwie nicht...
 * noch nicht komplett fehlerbereinigt
 ***************************************************************************}
 
@@ -29,18 +29,18 @@ PROGRAM ppp01;
 {$COPERATORS OFF} {$mode FPC} {$H+}
 USES CRT, SDL2, SDL2_Image, SDL2_Mixer, sysutils;
 
-CONST SCREEN_WIDTH  = 1280;            { size of the grafic window }
-      SCREEN_HEIGHT = 720;             { size of the grafic window }
-      MAX_Tiles     = 8;
-      TILE_SIZE     = 64;
-      MAP_WIDTH     = 40;
-      MAP_HEIGHT    = 20;
-      MAP_RENDER_WIDTH = 20;
+CONST SCREEN_WIDTH      = 1280;            { size of the grafic window }
+      SCREEN_HEIGHT     = 720;             { size of the grafic window }
+      MAX_Tiles         = 7;
+      TILE_SIZE         = 64;
+      MAP_WIDTH         = 40;
+      MAP_HEIGHT        = 20;
+      MAP_RENDER_WIDTH  = 20;
       MAP_RENDER_HEIGHT = 12;
-      MAX_NAME_LENGTH = 32;
+      MAX_NAME_LENGTH   = 32;
       MAX_FILENAME_LENGTH = 1024;
       MAX_KEYBOARD_KEYS = 350;
-      MAX_SND_CHANNELS = 16;
+      MAX_SND_CHANNELS  = 16;
 
 TYPE                                        { "T" short for "TYPE" }
      TDelegating = (Game);
@@ -76,7 +76,7 @@ VAR app      : TApp;
     EMessage : PChar;
     gTicks   : UInt32;
     gRemainder : double;
-    tiles    : ARRAY[1..PRED(MAX_Tiles)] of PSDL_Texture;
+    tiles    : ARRAY[1..MAX_Tiles] of PSDL_Texture;
 
 // *****************   UTIL   *****************
 
@@ -287,7 +287,7 @@ end;
 procedure AtExit;
 VAR i : byte;
 begin
-  for i := 1 to PRED(Max_Tiles) do
+  for i := 1 to Max_Tiles do
     SDL_DestroyTexture (Tiles[i]);
   SDL_DestroyRenderer(app.Renderer);
   SDL_DestroyWindow  (app.Window);
