@@ -116,15 +116,15 @@ end;
 
 // ****************   Texture   ***************
 
-procedure addTextureToCache(namen : Pchar; LTexture : PSDL_Texture);
-VAR te : PTextur;
+procedure addTextureToCache(LName : Pchar; LTexture : PSDL_Texture);
+VAR cache : PTextur;
 begin
-  NEW(te);
-  app.textureTail^.next := te;
-  app.textureTail := te;
-  te^.name := namen;
-  te^.Texture := LTexture;
-  te^.next := NIL;
+  NEW(cache);
+  app.textureTail^.next := cache;
+  app.textureTail := cache;
+  cache^.name := LName;
+  cache^.Texture := LTexture;
+  cache^.next := NIL;
 end;
 
 function getTexture(name : Pchar) : PSDL_Texture;
@@ -134,11 +134,8 @@ begin
   tf := app.textureHead^.next;
   while (tf <> NIL) do
   begin
-    if compareText(tf^.name, name) = 0
-      then
-        getTexture := tf^.Texture
-      else
-        getTexture := NIL;
+    if {compareText}strcomp(tf^.name, name) = 0
+      then getTexture := tf^.Texture;
     tf := tf^.next;
   end;
 end;
@@ -157,9 +154,29 @@ begin
   loadTexture := tg;
 end;
 
+{
+procedure loadTiles;
+VAR i : integer;
+    filename, Nr, a, b : pchar;
+begin
+  a := 'gfx/tile';
+  b := '.png';
+
+  filename := StrAlloc(StrLen(a)+6);
+  for i := 1 to MAX_TILES do
+  begin
+    Nr := Pchar(IntToStr(i));
+    StrMove(filename,a,StrLen(a)+1);
+    StrCat(filename,Nr);
+    StrCat(filename,b);
+    tiles[i] := loadTexture(filename);
+  end;
+end;
+}
+
 procedure loadTiles;
 begin
-  { Eine for Schleife mit intToStr(i) zur Dateinamensbildung funktioniert irgendwie nicht... }
+ //  Eine for Schleife mit intToStr(i) zur Dateinamensbildung funktioniert irgendwie nicht...
   tiles[1] := loadTexture('gfx/tile1.png');
   tiles[2] := loadTexture('gfx/tile2.png');
   tiles[3] := loadTexture('gfx/tile3.png');
@@ -172,11 +189,9 @@ end;
 procedure initStageListenPointer;
 begin
   NEW(app.textureHead);
-
   app.textureHead^.name := '';
   app.textureHead^.Texture := NIL;
   app.textureHead^.next := NIL;
-
   app.textureTail := app.textureHead;
 end;
 
@@ -239,6 +254,7 @@ procedure initMap;
 begin
   FillChar(stage.map, sizeof(stage.map), 0);
   loadTiles;
+//  loadTiles;
   loadMap('data/map01.dat');
 end;
 
@@ -284,6 +300,24 @@ begin
   SDL_ShowCursor(0);
 end;
 
+procedure Loesch_Liste(a : Ptextur);
+VAR t : Ptextur;
+begin
+  t := a;
+  while (t <> NIL) do
+  begin a := t;
+    DISPOSE(t);
+    t := a^.next;
+  end;
+end;
+
+procedure cleanUp;
+begin
+  Loesch_Liste(app.TextureHead^.next);
+  DISPOSE(app.TextureHead);
+  if ExitCode <> 0 then WriteLn('CleanUp complete!');
+end;
+
 procedure AtExit;
 VAR i : byte;
 begin
@@ -294,7 +328,7 @@ begin
   SDL_Quit;
   if Exitcode <> 0 then WriteLn(SDL_GetError());
 
-  //if ExitCode <> 0 then cleanUp;
+  if ExitCode <> 0 then cleanUp;
   Mix_CloseAudio;
   SDL_DestroyRenderer(app.Renderer);
   SDL_DestroyWindow (app.Window);
