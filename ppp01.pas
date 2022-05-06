@@ -134,7 +134,7 @@ begin
   tf := app.textureHead^.next;
   while (tf <> NIL) do
   begin
-    if {compareText}strcomp(tf^.name, name) = 0
+    if strcomp(tf^.name, name) = 0
       then getTexture := tf^.Texture;
     tf := tf^.next;
   end;
@@ -169,7 +169,7 @@ begin
     StrMove(filename,a,StrLen(a)+1);
     StrCat(filename,Nr);
     StrCat(filename,b);
-    tiles[i] := loadTexture(filename);
+    tiles[i] := loadTexture(filename);   // hat das mit dem Zeiger auf PChar zu tun?
   end;
 end;
 }
@@ -254,7 +254,6 @@ procedure initMap;
 begin
   FillChar(stage.map, sizeof(stage.map), 0);
   loadTiles;
-//  loadTiles;
   loadMap('data/map01.dat');
 end;
 
@@ -313,8 +312,8 @@ end;
 
 procedure cleanUp;
 begin
-  Loesch_Liste(app.TextureHead^.next);
-  DISPOSE(app.TextureHead);
+  Loesch_Liste(app.TextureHead^.next);    // stimmt das ???
+  DISPOSE(app.TextureHead);               // und dies ???
   if ExitCode <> 0 then WriteLn('CleanUp complete!');
 end;
 
@@ -323,10 +322,6 @@ VAR i : byte;
 begin
   for i := 1 to Max_Tiles do
     SDL_DestroyTexture (Tiles[i]);
-  SDL_DestroyRenderer(app.Renderer);
-  SDL_DestroyWindow  (app.Window);
-  SDL_Quit;
-  if Exitcode <> 0 then WriteLn(SDL_GetError());
 
   if ExitCode <> 0 then cleanUp;
   Mix_CloseAudio;
