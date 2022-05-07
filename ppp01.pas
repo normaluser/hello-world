@@ -60,11 +60,6 @@ TYPE                                        { "T" short for "TYPE" }
                      textureHead, textureTail : PTextur;
                      Delegate : TDelegate;
                    end;
-     PEntity     = ^TEntity;
-     TEntity     = RECORD
-                     x, y : integer;
-                     Texture : PSDL_Texture;
-                   end;
      TStage      = RECORD
                      map : ARRAY[0..MAP_WIDTH,0..MAP_HEIGHT] of integer;
                    end;
