@@ -20,8 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
 * Loadtiles: Eine for Schleife mit intToStr(i) zur Dateinamensbildung
-* funktioniert irgendwie nicht...
-* noch nicht komplett fehlerbereinigt
+* funktioniert irgendwie nicht... immer dieselbe Speicheradresse bei PChar?? ARRAY of PChar??
+* noch nicht komplett fehlerbereinigt ?! NEW / Dispose kommt zu Null
 ***************************************************************************}
 
 PROGRAM ppp01;
@@ -77,6 +77,7 @@ VAR app      : TApp;
     gTicks   : UInt32;
     gRemainder : double;
     tiles    : ARRAY[1..MAX_Tiles] of PSDL_Texture;
+    summ     : integer;
 
 // *****************   UTIL   *****************
 
@@ -120,6 +121,7 @@ procedure addTextureToCache(LName : Pchar; LTexture : PSDL_Texture);
 VAR cache : PTextur;
 begin
   NEW(cache);
+  INC(summ);
   app.textureTail^.next := cache;
   app.textureTail := cache;
   cache^.name := LName;
@@ -169,7 +171,7 @@ begin
     StrMove(filename,a,StrLen(a)+1);
     StrCat(filename,Nr);
     StrCat(filename,b);
-    tiles[i] := loadTexture(filename);   // hat das mit dem Zeiger auf PChar zu tun?
+    tiles[i] := loadTexture(filename);   // hat das mit dem Zeiger auf PChar zu tun?  IMMER die selbe Speicheradresse??
   end;
 end;
 }
@@ -189,6 +191,7 @@ end;
 procedure initStageListenPointer;
 begin
   NEW(app.textureHead);
+  INC(summ);
   app.textureHead^.name := '';
   app.textureHead^.Texture := NIL;
   app.textureHead^.next := NIL;
@@ -299,21 +302,23 @@ begin
   SDL_ShowCursor(0);
 end;
 
-procedure Loesch_Liste(a : Ptextur);
-VAR t : Ptextur;
+procedure destroyTexture;
+VAR tex : PTextur;
 begin
-  t := a;
-  while (t <> NIL) do
-  begin a := t;
-    DISPOSE(t);
-    t := a^.next;
+  tex := app.textureHead^.next;
+  while (tex <> NIL) do
+  begin
+    tex := app.textureHead^.next;
+    app.textureHead^.next := tex^.next;
+    DEC(summ); DISPOSE(tex);
+    tex := tex^.next;
   end;
+  DISPOSE(app.TextureHead);   DEC(Summ);
 end;
 
 procedure cleanUp;
 begin
-  Loesch_Liste(app.TextureHead^.next);    // stimmt das ???
-  DISPOSE(app.TextureHead);               // und dies ???
+  destroyTexture;
   if ExitCode <> 0 then WriteLn('CleanUp complete!');
 end;
 
@@ -410,6 +415,7 @@ end;
 
 begin
   CLRSCR;
+  summ := 0;
   InitSDL;
   InitStageListenPointer;
   InitMap;
@@ -425,5 +431,7 @@ begin
     CapFrameRate(gRemainder, gTicks);
   end;
 
+  cleanUp;
   AtExit;
+  writeln; writeln(summ);
 end.
