@@ -24,10 +24,10 @@ converted from "C" to "Pascal" by Ulrich 2022
 * noch nicht komplett fehlerbereinigt ?! NEW / Dispose kommt zu Null
 ***************************************************************************}
 
-PROGRAM ppp01;
+PROGRAM ppp02;
 
 {$COPERATORS OFF} {$mode FPC} {$H+}
-USES CRT, SDL2, SDL2_Image, SDL2_Mixer, sysutils;
+USES CRT, SDL2, SDL2_Image, SDL2_Mixer, Math, sysutils;
 
 CONST SCREEN_WIDTH      = 1280;            { size of the grafic window }
       SCREEN_HEIGHT     = 720;             { size of the grafic window }
@@ -37,6 +37,7 @@ CONST SCREEN_WIDTH      = 1280;            { size of the grafic window }
       MAP_HEIGHT        = 20;
       MAP_RENDER_WIDTH  = 20;
       MAP_RENDER_HEIGHT = 12;
+      PLAYER_MOVE_SPEED = 12;
       MAX_NAME_LENGTH   = 32;
       MAX_FILENAME_LENGTH = 1024;
       MAX_KEYBOARD_KEYS = 350;
@@ -61,6 +62,7 @@ TYPE                                        { "T" short for "TYPE" }
                      Delegate : TDelegate;
                    end;
      TStage      = RECORD
+                     camera : TSDL_Point;
                      map : ARRAY[0..PRED(MAP_WIDTH),0..PRED(MAP_HEIGHT)] of integer;
                    end;
 
@@ -80,6 +82,29 @@ procedure errorMessage(Message : PChar);
 begin
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,'Error Box',Message,NIL);
   HALT(1);
+end;
+
+// ****************   CAMERA   ****************
+
+procedure doCamera;
+begin
+  stage.camera.x := MIN(MAX(stage.camera.x, 0), (MAP_WIDTH * TILE_SIZE) - SCREEN_WIDTH);
+  stage.camera.y := MIN(MAX(stage.camera.y, 0), (MAP_HEIGHT * TILE_SIZE) - SCREEN_HEIGHT);
+end;
+
+procedure doPlayer;
+begin
+  if (app.keyboard[SDL_SCANCODE_A] = 1) then
+    stage.camera.x := stage.camera.x - PLAYER_MOVE_SPEED;
+
+  if (app.keyboard[SDL_SCANCODE_D] = 1) then
+    stage.camera.x := stage.camera.x + PLAYER_MOVE_SPEED;
+
+  if (app.keyboard[SDL_SCANCODE_W] = 1) then
+    stage.camera.y := stage.camera.y - PLAYER_MOVE_SPEED;
+
+  if (app.keyboard[SDL_SCANCODE_S] = 1) then
+    stage.camera.y := stage.camera.y + PLAYER_MOVE_SPEED;
 end;
 
 // *****************   DRAW   *****************
@@ -206,18 +231,41 @@ end;
 // *****************    MAP   *****************
 
 procedure drawMap;
-VAR x, y, n : integer;
+VAR a, b, x, y, n, x1, x2, y1, y2, mx, my : integer;
 begin
-  for y := 0 to PRED(MAP_RENDER_HEIGHT) do
+  x1 := (stage.camera.x MOD TILE_SIZE) * (-1);
+  if (x1 = 0) then a := 0
+              else a := TILE_SIZE;
+  x2 := x1 + a + MAP_RENDER_WIDTH * TILE_SIZE;
+
+  y1 := (stage.camera.y MOD TILE_SIZE) * (-1);
+  if (y1 = 0) then b := 0
+              else b := TILE_SIZE;
+  y2 := y1 + b + MAP_RENDER_HEIGHT * TILE_SIZE;
+
+  mx := stage.camera.x DIV TILE_SIZE;
+  my := stage.camera.y DIV TILE_SIZE;
+
+  y := y1;
+  while y <= y2 do
   begin
-    for x := 0 to PRED(MAP_RENDER_WIDTH) do
+    x := x1;
+    while x <= x2 do
     begin
-      n := stage.map[x,y];
-      if (n > 0) then
+      if ((mx >= 0) AND (my >= 0) AND (mx < MAP_WIDTH) AND (my < MAP_HEIGHT)) then
       begin
-        blit(tiles[n], x * TILE_SIZE, y * TILE_SIZE, 0);
+        n := stage.map[mx,my];
+        if (n > 0) then
+        begin
+          blit(tiles[n], x, y, 0);
+        end;
       end;
+      INC(mx);
+      INC(x, TILE_SIZE);
     end;
+    mx := stage.camera.x DIV TILE_SIZE;
+    INC(my);
+    INC(y, TILE_SIZE);
   end;
 end;
 
@@ -268,6 +316,8 @@ end;
 procedure logic_Game;
 begin
   app.delegate.logic := Game;
+  doPlayer;
+  doCamera;
 end;
 
 // ***************   INIT SDL   ***************
@@ -280,7 +330,7 @@ begin
   if SDL_Init(SDL_INIT_VIDEO) < 0 then
     errorMessage(SDL_GetError());
 
-  app.Window := SDL_CreateWindow('Pete''s Pizza Party 1', SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, windowFlags);
+  app.Window := SDL_CreateWindow('Pete''s Pizza Party 2', SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, windowFlags);
   if app.Window = NIL then
     errorMessage(SDL_GetError());
 
@@ -336,33 +386,6 @@ end;
 
 // *****************   Input  *****************
 
-procedure doKeyDown;
-begin
-  if Event.key._repeat = 0 then
-  begin
-    CASE Event.key.keysym.sym of
-      SDL_KEYDOWN: begin
-                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
-                       app.keyboard[Event.key.keysym.scancode] := 1;
-                     if (app.keyboard[SDL_ScanCode_ESCAPE]) = 1 then exitLoop := TRUE;
-                   end;   { SDL_Keydown }
-    end; { CASE }
-  end;   { IF }
-end;
-
-procedure doKeyUp;
-begin
-  if Event.key._repeat = 0 then
-  begin
-    CASE Event.key.keysym.sym of
-      SDL_KEYUP:   begin
-                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
-                       app.keyboard[Event.key.keysym.scancode] := 0;
-                   end;   { SDL_Keyup }
-    end; { CASE }
-  end;   { IF }
-end;
-
 procedure doInput;
 begin
   while SDL_PollEvent(@Event) = 1 do
@@ -372,9 +395,16 @@ begin
       SDL_QUITEV:          exitLoop := TRUE;        { close Window }
       SDL_MOUSEBUTTONDOWN: exitLoop := TRUE;        { if Mousebutton pressed }
 
-      SDL_KEYDOWN: doKeyDown;
-      SDL_KEYUP:   doKeyUp;
+      SDL_KEYDOWN: begin
+                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
+                       app.keyboard[Event.key.keysym.scancode] := 1;
+                     if (app.keyboard[SDL_ScanCode_ESCAPE]) = 1 then exitLoop := TRUE;
+                   end;   { SDL_Keydown }
 
+      SDL_KEYUP:   begin
+                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
+                       app.keyboard[Event.key.keysym.scancode] := 0;
+                   end;   { SDL_Keyup }
     end;  { CASE Event }
   end;    { SDL_PollEvent }
 end;
