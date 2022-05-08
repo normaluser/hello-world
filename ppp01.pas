@@ -19,9 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ***************************************************************************
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
-* Loadtiles: Eine for Schleife mit intToStr(i) zur Dateinamensbildung
-* funktioniert irgendwie nicht... immer dieselbe Speicheradresse bei PChar?? ARRAY of PChar??
-* noch nicht komplett fehlerbereinigt ?! NEW / Dispose kommt zu Null
+* changed all PChar to String Types for better string handling!
 ***************************************************************************}
 
 PROGRAM ppp01;
@@ -37,8 +35,6 @@ CONST SCREEN_WIDTH      = 1280;            { size of the grafic window }
       MAP_HEIGHT        = 20;
       MAP_RENDER_WIDTH  = 20;
       MAP_RENDER_HEIGHT = 12;
-      MAX_NAME_LENGTH   = 32;
-      MAX_FILENAME_LENGTH = 1024;
       MAX_KEYBOARD_KEYS = 350;
       MAX_SND_CHANNELS  = 16;
 
@@ -49,7 +45,7 @@ TYPE                                        { "T" short for "TYPE" }
                    end;
      PTextur     = ^TTexture;
      TTexture    = RECORD
-                     name : PChar;
+                     name : String;
                      Texture : PSDL_Texture;
                      next : PTextur;
                    end;
@@ -68,7 +64,7 @@ VAR app      : TApp;
     stage    : TStage;
     Event    : TSDL_EVENT;
     exitLoop : BOOLEAN;
-    EMessage : PChar;
+    EMessage : String;
     gTicks   : UInt32;
     gRemainder : double;
     tiles    : ARRAY[1..MAX_Tiles] of PSDL_Texture;
@@ -76,9 +72,9 @@ VAR app      : TApp;
 
 // *****************   UTIL   *****************
 
-procedure errorMessage(Message : PChar);
+procedure errorMessage(Message : String);
 begin
-  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,'Error Box',Message,NIL);
+  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,'Error Box',PChar(Message),NIL);
   HALT(1);
 end;
 
@@ -112,7 +108,7 @@ end;
 
 // ****************   Texture   ***************
 
-procedure addTextureToCache(LName : Pchar; LTexture : PSDL_Texture);
+procedure addTextureToCache(LName : String; LTexture : PSDL_Texture);
 VAR cache : PTextur;
 begin
   NEW(cache);
@@ -124,26 +120,26 @@ begin
   cache^.next := NIL;
 end;
 
-function getTexture(name : Pchar) : PSDL_Texture;
+function getTexture(name : String) : PSDL_Texture;
 VAR tf : PTextur;
 begin
   getTexture := NIL;
   tf := app.textureHead^.next;
   while (tf <> NIL) do
   begin
-    if strcomp(tf^.name, name) = 0
-      then getTexture := tf^.Texture;
+    if tf^.name = name then
+      getTexture := tf^.Texture;
     tf := tf^.next;
   end;
 end;
 
-function loadTexture(Pfad : Pchar) : PSDL_Texture;
+function loadTexture(Pfad : String) : PSDL_Texture;
 VAR tg : PSDL_Texture;
 begin
   tg := getTexture(Pfad);
   if tg = NIL then
   begin
-    tg := IMG_LoadTexture(app.Renderer, Pfad);
+    tg := IMG_LoadTexture(app.Renderer, PChar(Pfad));
     if tg = NIL then
       errorMessage(SDL_GetError());
     addTextureToCache(Pfad, tg);
@@ -151,36 +147,15 @@ begin
   loadTexture := tg;
 end;
 
-{
 procedure loadTiles;
 VAR i : integer;
-    filename, Nr, a, b : pchar;
+    filename : String;
 begin
-  a := 'gfx/tile';
-  b := '.png';
-
-  filename := StrAlloc(StrLen(a)+6);
   for i := 1 to MAX_TILES do
   begin
-    Nr := Pchar(IntToStr(i));
-    StrMove(filename,a,StrLen(a)+1);
-    StrCat(filename,Nr);
-    StrCat(filename,b);
-    tiles[i] := loadTexture(filename);   // hat das mit dem Zeiger auf PChar zu tun?  IMMER die selbe Speicheradresse??
+    filename := 'gfx/tile' + IntToStr(i) + '.png';
+    tiles[i] := loadTexture(filename);
   end;
-end;
-}
-
-procedure loadTiles;
-begin
- //  Eine for Schleife mit intToStr(i) zur Dateinamensbildung funktioniert irgendwie nicht...
-  tiles[1] := loadTexture('gfx/tile1.png');
-  tiles[2] := loadTexture('gfx/tile2.png');
-  tiles[3] := loadTexture('gfx/tile3.png');
-  tiles[4] := loadTexture('gfx/tile4.png');
-  tiles[5] := loadTexture('gfx/tile5.png');
-  tiles[6] := loadTexture('gfx/tile6.png');
-  tiles[7] := loadTexture('gfx/tile7.png');
 end;
 
 procedure initStageListenPointer;

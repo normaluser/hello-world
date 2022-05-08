@@ -19,9 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ***************************************************************************
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
-* Loadtiles: Eine for Schleife mit intToStr(i) zur Dateinamensbildung
-* funktioniert irgendwie nicht... immer dieselbe Speicheradresse bei PChar?? ARRAY of PChar??
-* noch nicht komplett fehlerbereinigt ?! NEW / Dispose kommt zu Null
+* PChar durch String ersetzt, weniger Probleme
 ***************************************************************************}
 
 PROGRAM ppp02;
@@ -38,8 +36,6 @@ CONST SCREEN_WIDTH      = 1280;            { size of the grafic window }
       MAP_RENDER_WIDTH  = 20;
       MAP_RENDER_HEIGHT = 12;
       PLAYER_MOVE_SPEED = 12;
-      MAX_NAME_LENGTH   = 32;
-      MAX_FILENAME_LENGTH = 1024;
       MAX_KEYBOARD_KEYS = 350;
       MAX_SND_CHANNELS  = 16;
 
@@ -50,7 +46,7 @@ TYPE                                        { "T" short for "TYPE" }
                    end;
      PTextur     = ^TTexture;
      TTexture    = RECORD
-                     name : PChar;
+                     name : String;
                      Texture : PSDL_Texture;
                      next : PTextur;
                    end;
@@ -70,7 +66,7 @@ VAR app      : TApp;
     stage    : TStage;
     Event    : TSDL_EVENT;
     exitLoop : BOOLEAN;
-    EMessage : PChar;
+    EMessage : String;
     gTicks   : UInt32;
     gRemainder : double;
     tiles    : ARRAY[1..MAX_Tiles] of PSDL_Texture;
@@ -78,9 +74,9 @@ VAR app      : TApp;
 
 // *****************   UTIL   *****************
 
-procedure errorMessage(Message : PChar);
+procedure errorMessage(Message : String);
 begin
-  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,'Error Box',Message,NIL);
+  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,'Error Box',PChar(Message),NIL);
   HALT(1);
 end;
 
@@ -94,16 +90,16 @@ end;
 
 procedure doPlayer;
 begin
-  if (app.keyboard[SDL_SCANCODE_A] = 1) then
+  if ((app.keyboard[SDL_SCANCODE_A] = 1) or (app.keyboard[SDL_SCANCODE_LEFT] = 1)) then
     stage.camera.x := stage.camera.x - PLAYER_MOVE_SPEED;
 
-  if (app.keyboard[SDL_SCANCODE_D] = 1) then
+  if ((app.keyboard[SDL_SCANCODE_D] = 1) OR (app.keyboard[SDL_SCANCODE_RIGHT] = 1)) then
     stage.camera.x := stage.camera.x + PLAYER_MOVE_SPEED;
 
-  if (app.keyboard[SDL_SCANCODE_W] = 1) then
+  if ((app.keyboard[SDL_SCANCODE_W] = 1) OR (app.keyboard[SDL_SCANCODE_UP] = 1)) then
     stage.camera.y := stage.camera.y - PLAYER_MOVE_SPEED;
 
-  if (app.keyboard[SDL_SCANCODE_S] = 1) then
+  if ((app.keyboard[SDL_SCANCODE_S] = 1) OR (app.keyboard[SDL_SCANCODE_DOWN] = 1)) then
     stage.camera.y := stage.camera.y + PLAYER_MOVE_SPEED;
 end;
 
@@ -137,7 +133,7 @@ end;
 
 // ****************   Texture   ***************
 
-procedure addTextureToCache(LName : Pchar; LTexture : PSDL_Texture);
+procedure addTextureToCache(LName : String; LTexture : PSDL_Texture);
 VAR cache : PTextur;
 begin
   NEW(cache);
@@ -149,26 +145,26 @@ begin
   cache^.next := NIL;
 end;
 
-function getTexture(name : Pchar) : PSDL_Texture;
+function getTexture(name : String) : PSDL_Texture;
 VAR tf : PTextur;
 begin
   getTexture := NIL;
   tf := app.textureHead^.next;
   while (tf <> NIL) do
   begin
-    if strcomp(tf^.name, name) = 0
-      then getTexture := tf^.Texture;
+    if tf^.name = name then         //strcomp(tf^.name, name) = 0
+      getTexture := tf^.Texture;
     tf := tf^.next;
   end;
 end;
 
-function loadTexture(Pfad : Pchar) : PSDL_Texture;
+function loadTexture(Pfad : String) : PSDL_Texture;
 VAR tg : PSDL_Texture;
 begin
   tg := getTexture(Pfad);
   if tg = NIL then
   begin
-    tg := IMG_LoadTexture(app.Renderer, Pfad);
+    tg := IMG_LoadTexture(app.Renderer, PChar(Pfad));
     if tg = NIL then
       errorMessage(SDL_GetError());
     addTextureToCache(Pfad, tg);
@@ -177,8 +173,8 @@ begin
 end;
 
 {
-procedure loadTiles;
-VAR i : integer;
+procedure loadTiles;     // build with PChar; ERROR in loadTexture(filename)
+VAR i : integer;         // because PChar uses always the same Pointer Adress??
     filename, Nr, a, b : pchar;
 begin
   a := 'gfx/tile';
@@ -197,17 +193,15 @@ end;
 }
 
 procedure loadTiles;
+VAR i : integer;
+    filename : String;
 begin
- //  Eine for Schleife mit intToStr(i) zur Dateinamensbildung funktioniert irgendwie nicht...
-  tiles[1] := loadTexture('gfx/tile1.png');
-  tiles[2] := loadTexture('gfx/tile2.png');
-  tiles[3] := loadTexture('gfx/tile3.png');
-  tiles[4] := loadTexture('gfx/tile4.png');
-  tiles[5] := loadTexture('gfx/tile5.png');
-  tiles[6] := loadTexture('gfx/tile6.png');
-  tiles[7] := loadTexture('gfx/tile7.png');
+  for i := 1 to MAX_TILES do
+  begin
+    filename := 'gfx/tile' + IntToStr(i) + '.png';
+    tiles[i] := loadTexture(PChar(filename));
+  end;
 end;
-
 procedure initStageListenPointer;
 begin
   NEW(app.textureHead);
