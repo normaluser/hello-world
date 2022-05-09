@@ -225,17 +225,15 @@ end;
 // *****************    MAP   *****************
 
 procedure drawMap;
-VAR a, b, x, y, n, x1, x2, y1, y2, mx, my : integer;
+VAR x, y, n, x1, x2, y1, y2, mx, my : integer;
 begin
   x1 := (stage.camera.x MOD TILE_SIZE) * (-1);
-  if (x1 = 0) then a := 0
-              else a := TILE_SIZE;
-  x2 := x1 + a + MAP_RENDER_WIDTH * TILE_SIZE;
+  if (x1 = 0) then x2 := x1 + MAP_RENDER_WIDTH * TILE_SIZE
+              else x2 := x1 + TILE_SIZE + MAP_RENDER_WIDTH * TILE_SIZE;
 
   y1 := (stage.camera.y MOD TILE_SIZE) * (-1);
-  if (y1 = 0) then b := 0
-              else b := TILE_SIZE;
-  y2 := y1 + b + MAP_RENDER_HEIGHT * TILE_SIZE;
+  if (y1 = 0) then y2 := y1 + MAP_RENDER_HEIGHT * TILE_SIZE
+              else y2 := y1 + TILE_SIZE + MAP_RENDER_HEIGHT * TILE_SIZE;
 
   mx := stage.camera.x DIV TILE_SIZE;
   my := stage.camera.y DIV TILE_SIZE;
