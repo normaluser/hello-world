@@ -53,7 +53,7 @@ CONST SCREEN_WIDTH  = 1280;            { size of the grafic window }
       NUM_HighScores = 8;
       MAX_KEYBOARD_KEYS = 350;
       MAX_SCORE_NAME_LENGTH = 16;
-      MAX_String_LENGTH = 50;
+      MAX_STRING_LENGTH = 50;
       SIDE_PLAYER = 0;
       SIDE_ALIEN = 1;
       FPS = 60;
@@ -77,7 +77,7 @@ CONST SCREEN_WIDTH  = 1280;            { size of the grafic window }
 
 TYPE                                        { "T" short for "TYPE" }
      TString16   = String[MAX_SCORE_NAME_LENGTH];
-     TString50   = String[MAX_String_LENGTH];
+     TString50   = String[MAX_STRING_LENGTH];
 
      TDelegating = (Logo, Highsc, Game, Menues);
      TDelegate   = RECORD
@@ -95,8 +95,8 @@ TYPE                                        { "T" short for "TYPE" }
                      keyboard : Array[0..MAX_KEYBOARD_KEYS] OF integer;
                      textureHead, textureTail : PTextur;
                      inputText : String;
-                     Delegate : TDelegate;
-                     r_Delegate : TDelegate;      { "R_" = short for Recent Value }
+                     delegate : TDelegate;
+                     r_delegate : TDelegate;      { "R_" = short for Recent Value }
                    end;
      PEntity     = ^TEntity;
      TEntity     = RECORD
@@ -160,7 +160,7 @@ VAR app                  : TApp;
     shooterTexture,
     background,
     explosionTexture     : PSDL_Texture;
-    Event                : TSDL_EVENT;
+    Event                : TSDL_Event;
     newHighScoreFlag,
     bMenue,
     exitLoop             : BOOLEAN;
@@ -604,8 +604,8 @@ end;
 procedure initHighScore;
 begin
   FillChar(app.keyboard, SizeOf(app.Keyboard), 0);     { empty keyboard puffer }
-  app.Delegate.logic := HighSC;
-  app.Delegate.draw  := HighSC;
+  app.delegate.logic := HighSC;
+  app.delegate.draw  := HighSC;
   timeout := FPS * 5;
 end;
 
@@ -1226,8 +1226,8 @@ end;
 
 procedure initStage;
 begin
-  app.Delegate.logic := Game;
-  app.Delegate.draw  := Game;
+  app.delegate.logic := Game;
+  app.delegate.draw  := Game;
   bulletTexture      := loadTexture('gfx/playerBullet.png');
   enemyTexture       := loadTexture('gfx/enemy.png');
   alienbulletTexture := loadTexture('gfx/alienBullet.png');
@@ -1280,8 +1280,8 @@ end;
 procedure initTitle;
 VAR r : TSDL_Rect;
 begin
-  app.Delegate.logic := Logo;
-  app.Delegate.draw  := Logo;
+  app.delegate.logic := Logo;
+  app.delegate.draw  := Logo;
   FillChar(app.keyboard, SizeOf(app.Keyboard), 0);     { empty keyboard puffer }
   SDL2Texture := loadTexture('gfx/sdl2.png');
   shooterTexture := loadTexture('gfx/shooter.png');
@@ -1352,16 +1352,16 @@ begin
     timeout := FPS * 5;                                                 { reset the timer for to show Highscore }
     bMenue := FALSE;                                                    { no Menue active now }
     emptyHighScore;                                                     { delete Highscore }
-    app.Delegate.logic := Highsc;                                       { switch to Highscore logic }
-    app.Delegate.draw  := Highsc;                                       { switch to Highscore draw  }
+    app.delegate.logic := Highsc;                                       { switch to Highscore logic }
+    app.delegate.draw  := Highsc;                                       { switch to Highscore draw  }
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 4)) then  { leave the Menu }
   begin
     Auswahl := 1;                                                       { Menue set to 1 }
     bMenue := FALSE;                                                    { no Menue active now }
-    app.Delegate.logic := app.r_Delegate.logic;                         { reset the old state of Logic }
-    app.Delegate.draw  := app.r_Delegate.draw;                          { reset the old state of Draw }
+    app.delegate.logic := app.r_delegate.logic;                         { reset the old state of Logic }
+    app.delegate.draw  := app.r_delegate.draw;                          { reset the old state of Draw }
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = MAX_Menu)) then { EXIT the Game }
@@ -1523,9 +1523,9 @@ begin
   SDL_ShowCursor(1);
 end;
 
-// *************   Delegate LOGIC   ***********
+// *************   DELEGATE LOGIC   ***********
 
-procedure Delegate_logic(Wahl : TDelegating);
+procedure delegate_logic(Wahl : TDelegating);
 begin
   CASE Wahl of
   Logo : begin
@@ -1564,10 +1564,10 @@ begin
                        app.keyboard[Event.key.keysym.scancode] := 1;
                      if ((app.keyboard[SDL_ScanCode_ESCAPE] = 1) AND (bMenue = FALSE)) then
                      begin
-                       app.r_Delegate.logic := app.Delegate.logic;  { save the old state }
-                       app.r_Delegate.draw  := app.Delegate.draw;   { save the old state }
-                       app.Delegate.logic := Menues;                { switch to menue }
-                       app.Delegate.draw  := Menues;                { switch to menue }
+                       app.r_delegate.logic := app.delegate.logic;  { save the old state }
+                       app.r_delegate.draw  := app.delegate.draw;   { save the old state }
+                       app.delegate.logic := Menues;                { switch to menue }
+                       app.delegate.draw  := Menues;                { switch to menue }
                        bMenue := TRUE;                              { menue is active now }
                      end;
                    end;   { SDL_Keydown }
@@ -1611,7 +1611,7 @@ begin
   begin
     prepareScene;
     doInput;
-    Delegate_logic(app.Delegate.logic);
+    delegate_logic(app.delegate.logic);
     presentScene;
     CapFrameRate(gRemainder, gTicks);
   end;
