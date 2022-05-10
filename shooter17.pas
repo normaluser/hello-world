@@ -34,7 +34,7 @@ converted from "C" to "Pascal" by Ulrich 2021
 -enemy^.dx (-1) * dx eingefuegt
 -addpointspod geschwindigkeit um 0.1 verringert
 -loadsound errormeldungen korrigiert
--Errormessage erweitert um Sound-Fehlermeldungen
+-ErrorMessage erweitert um Sound-Fehlermeldungen
 -Numberfill optimiert mit Format-Befehl Freepascal
 -Logo Draw optimiert
 -Menu fuer Sound & Musik eingebaut
@@ -53,7 +53,7 @@ CONST SCREEN_WIDTH  = 1280;            { size of the grafic window }
       NUM_HighScores = 8;
       MAX_KEYBOARD_KEYS = 350;
       MAX_SCORE_NAME_LENGTH = 16;
-      MAX_STRING_LENGTH = 50;
+      MAX_String_LENGTH = 50;
       SIDE_PLAYER = 0;
       SIDE_ALIEN = 1;
       FPS = 60;
@@ -77,7 +77,7 @@ CONST SCREEN_WIDTH  = 1280;            { size of the grafic window }
 
 TYPE                                        { "T" short for "TYPE" }
      TString16   = String[MAX_SCORE_NAME_LENGTH];
-     TString50   = String[MAX_STRING_LENGTH];
+     TString50   = String[MAX_String_LENGTH];
 
      TDelegating = (Logo, Highsc, Game, Menues);
      TDelegate   = RECORD
@@ -85,7 +85,7 @@ TYPE                                        { "T" short for "TYPE" }
                    end;
      PTextur     = ^TTexture;
      TTexture    = RECORD
-                     name : string;
+                     name : String;
                      Texture : PSDL_Texture;
                      next : PTextur;
                    end;
@@ -95,8 +95,8 @@ TYPE                                        { "T" short for "TYPE" }
                      keyboard : Array[0..MAX_KEYBOARD_KEYS] OF integer;
                      textureHead, textureTail : PTextur;
                      inputText : String;
-                     delegate : TDelegate;
-                     r_delegate : TDelegate;      { "R_" = short for Recent Value }
+                     Delegate : TDelegate;
+                     r_Delegate : TDelegate;      { "R_" = short for Recent Value }
                    end;
      PEntity     = ^TEntity;
      TEntity     = RECORD
@@ -261,9 +261,9 @@ begin
   end;
 end;
 
-procedure errorMessage(Message : string);
+procedure errorMessage(Message : String);
 begin
-  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,'Error Box',PChar(message),NIL);
+  SDL_ShowSimpleMessageBox(SDL_MessageBOX_ERROR,'Error Box',PChar(Message),NIL);
   HALT(1);
 end;
 
@@ -340,7 +340,7 @@ begin
   SDL_RenderCopy(app.Renderer, Texture, src, @dest);
 end;
 
-procedure addTextureToCache(Lname : string; LTexture : PSDL_Texture);
+procedure addTextureToCache(Lname : String; LTexture : PSDL_Texture);
 VAR cache : PTextur;
 begin
   NEW(cache);
@@ -351,7 +351,7 @@ begin
   cache^.Texture := LTexture;
 end;
 
-function getTexture(name : string) : PSDL_Texture;
+function getTexture(name : String) : PSDL_Texture;
 VAR tg : PTextur;
 begin
   getTexture := NIL;
@@ -365,7 +365,7 @@ begin
   end;
 end;
 
-function loadTexture(Pfad : string) : PSDL_Texture;
+function loadTexture(Pfad : String) : PSDL_Texture;
 VAR tl : PSDL_Texture;
 begin
   tl := getTexture(Pfad);
@@ -421,7 +421,7 @@ function numberfill(a : integer) : TString50;
 VAR FMT : TString16;
 begin
   Fmt := '[%.3d]';                  { Fmt: arguments for Format }
-  numberfill := Format(Fmt, [a]);   { Format: format a string with given arguments (=> Fmt) }
+  numberfill := Format(Fmt, [a]);   { Format: format a String with given arguments (=> Fmt) }
 end;
 
 procedure initFonts;
@@ -604,8 +604,8 @@ end;
 procedure initHighScore;
 begin
   FillChar(app.keyboard, SizeOf(app.Keyboard), 0);     { empty keyboard puffer }
-  app.delegate.logic := HighSC;
-  app.delegate.draw  := HighSC;
+  app.Delegate.logic := HighSC;
+  app.Delegate.draw  := HighSC;
   timeout := FPS * 5;
 end;
 
@@ -1226,8 +1226,8 @@ end;
 
 procedure initStage;
 begin
-  app.delegate.logic := Game;
-  app.delegate.draw  := Game;
+  app.Delegate.logic := Game;
+  app.Delegate.draw  := Game;
   bulletTexture      := loadTexture('gfx/playerBullet.png');
   enemyTexture       := loadTexture('gfx/enemy.png');
   alienbulletTexture := loadTexture('gfx/alienBullet.png');
@@ -1280,8 +1280,8 @@ end;
 procedure initTitle;
 VAR r : TSDL_Rect;
 begin
-  app.delegate.logic := Logo;
-  app.delegate.draw  := Logo;
+  app.Delegate.logic := Logo;
+  app.Delegate.draw  := Logo;
   FillChar(app.keyboard, SizeOf(app.Keyboard), 0);     { empty keyboard puffer }
   SDL2Texture := loadTexture('gfx/sdl2.png');
   shooterTexture := loadTexture('gfx/shooter.png');
@@ -1352,16 +1352,16 @@ begin
     timeout := FPS * 5;                                                 { reset the timer for to show Highscore }
     bMenue := FALSE;                                                    { no Menue active now }
     emptyHighScore;                                                     { delete Highscore }
-    app.delegate.logic := Highsc;                                       { switch to Highscore logic }
-    app.delegate.draw  := Highsc;                                       { switch to Highscore draw  }
+    app.Delegate.logic := Highsc;                                       { switch to Highscore logic }
+    app.Delegate.draw  := Highsc;                                       { switch to Highscore draw  }
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = 4)) then  { leave the Menu }
   begin
     Auswahl := 1;                                                       { Menue set to 1 }
     bMenue := FALSE;                                                    { no Menue active now }
-    app.delegate.logic := app.r_delegate.logic;                         { reset the old state of Logic }
-    app.delegate.draw  := app.r_delegate.draw;                          { reset the old state of Draw }
+    app.Delegate.logic := app.r_Delegate.logic;                         { reset the old state of Logic }
+    app.Delegate.draw  := app.r_Delegate.draw;                          { reset the old state of Draw }
   end;
   if (((app.keyboard[SDL_ScanCode_RETURN] = 1)
     OR (app.keyboard[SDL_ScanCode_SPACE] = 1)) AND (Auswahl = MAX_Menu)) then { EXIT the Game }
@@ -1523,9 +1523,9 @@ begin
   SDL_ShowCursor(1);
 end;
 
-// *************   DELEGATE LOGIC   ***********
+// *************   Delegate LOGIC   ***********
 
-procedure delegate_logic(Wahl : TDelegating);
+procedure Delegate_logic(Wahl : TDelegating);
 begin
   CASE Wahl of
   Logo : begin
@@ -1564,10 +1564,10 @@ begin
                        app.keyboard[Event.key.keysym.scancode] := 1;
                      if ((app.keyboard[SDL_ScanCode_ESCAPE] = 1) AND (bMenue = FALSE)) then
                      begin
-                       app.r_delegate.logic := app.delegate.logic;  { save the old state }
-                       app.r_delegate.draw  := app.delegate.draw;   { save the old state }
-                       app.delegate.logic := Menues;                { switch to menue }
-                       app.delegate.draw  := Menues;                { switch to menue }
+                       app.r_Delegate.logic := app.Delegate.logic;  { save the old state }
+                       app.r_Delegate.draw  := app.Delegate.draw;   { save the old state }
+                       app.Delegate.logic := Menues;                { switch to menue }
+                       app.Delegate.draw  := Menues;                { switch to menue }
                        bMenue := TRUE;                              { menue is active now }
                      end;
                    end;   { SDL_Keydown }
@@ -1611,7 +1611,7 @@ begin
   begin
     prepareScene;
     doInput;
-    delegate_logic(app.delegate.logic);
+    Delegate_logic(app.Delegate.logic);
     presentScene;
     CapFrameRate(gRemainder, gTicks);
   end;
