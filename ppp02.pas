@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ***************************************************************************
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
-* PChar durch String ersetzt, weniger Probleme
+* changed all PChar to String Types for better string handling!
 ***************************************************************************}
 
 PROGRAM ppp02;
@@ -29,7 +29,7 @@ USES CRT, SDL2, SDL2_Image, SDL2_Mixer, Math, sysutils;
 
 CONST SCREEN_WIDTH      = 1280;            { size of the grafic window }
       SCREEN_HEIGHT     = 720;             { size of the grafic window }
-      MAX_Tiles         = 7;
+      MAX_TILES         = 7;
       TILE_SIZE         = 64;
       MAP_WIDTH         = 40;
       MAP_HEIGHT        = 20;
@@ -47,7 +47,7 @@ TYPE                                        { "T" short for "TYPE" }
      PTextur     = ^TTexture;
      TTexture    = RECORD
                      name : String;
-                     Texture : PSDL_Texture;
+                     texture : PSDL_Texture;
                      next : PTextur;
                    end;
      TApp        = RECORD
@@ -62,15 +62,13 @@ TYPE                                        { "T" short for "TYPE" }
                      map : ARRAY[0..PRED(MAP_WIDTH),0..PRED(MAP_HEIGHT)] of integer;
                    end;
 
-VAR app      : TApp;
-    stage    : TStage;
-    Event    : TSDL_EVENT;
-    exitLoop : BOOLEAN;
-    EMessage : String;
-    gTicks   : UInt32;
-    gRemainder : double;
-    tiles    : ARRAY[1..MAX_Tiles] of PSDL_Texture;
-    summ     : integer;
+VAR app        : TApp;
+    stage      : TStage;
+    event      : TSDL_EVENT;
+    exitLoop   : BOOLEAN;
+    gTicks     : UInt32;
+    gRemainder : Double;
+    tiles      : ARRAY[1..MAX_TILES] of PSDL_Texture;
 
 // *****************   UTIL   *****************
 
@@ -105,12 +103,12 @@ end;
 
 // *****************   DRAW   *****************
 
-procedure blit(Texture : PSDL_Texture; x, y, center : integer);
+procedure blit(texture : PSDL_Texture; x, y, center : integer);
 VAR dest : TSDL_Rect;
 begin
   dest.x := x;
   dest.y := y;
-  SDL_QueryTexture(Texture, NIL, NIL, @dest.w, @dest.h);
+  SDL_QueryTexture(texture, NIL, NIL, @dest.w, @dest.h);
 
   if center <> 0 then
   begin
@@ -118,30 +116,29 @@ begin
     dest.y := dest.h DIV 2;
   end;
 
-  SDL_RenderCopy(app.Renderer, Texture, NIL, @dest);
+  SDL_RenderCopy(app.Renderer, texture, NIL, @dest);
 end;
 
-procedure blitRect(Texture : PSDL_Texture; src : PSDL_Rect; x, y : integer); INLINE;
+procedure blitRect(texture : PSDL_Texture; src : PSDL_Rect; x, y : integer);
 VAR dest : TSDL_Rect;
 begin
   dest.x := x;
   dest.y := y;
   dest.w := src^.w;
   dest.h := src^.h;
-  SDL_RenderCopy(app.Renderer, Texture, src, @dest);
+  SDL_RenderCopy(app.Renderer, texture, src, @dest);
 end;
 
-// ****************   Texture   ***************
+// ****************   TEXTURE   ***************
 
 procedure addTextureToCache(LName : String; LTexture : PSDL_Texture);
 VAR cache : PTextur;
 begin
   NEW(cache);
-  INC(summ);
   app.textureTail^.next := cache;
   app.textureTail := cache;
   cache^.name := LName;
-  cache^.Texture := LTexture;
+  cache^.texture := LTexture;
   cache^.next := NIL;
 end;
 
@@ -152,8 +149,8 @@ begin
   tf := app.textureHead^.next;
   while (tf <> NIL) do
   begin
-    if tf^.name = name then         //strcomp(tf^.name, name) = 0
-      getTexture := tf^.Texture;
+    if tf^.name = name then
+      getTexture := tf^.texture;
     tf := tf^.next;
   end;
 end;
@@ -199,15 +196,14 @@ begin
   for i := 1 to MAX_TILES do
   begin
     filename := 'gfx/tile' + IntToStr(i) + '.png';
-    tiles[i] := loadTexture(PChar(filename));
+    tiles[i] := loadTexture(filename);
   end;
 end;
-procedure initStageListenPointer;
+procedure initStage;
 begin
   NEW(app.textureHead);
-  INC(summ);
   app.textureHead^.name := '';
-  app.textureHead^.Texture := NIL;
+  app.textureHead^.texture := NIL;
   app.textureHead^.next := NIL;
   app.textureTail := app.textureHead;
 end;
@@ -248,9 +244,7 @@ begin
       begin
         n := stage.map[mx,my];
         if (n > 0) then
-        begin
           blit(tiles[n], x, y, 0);
-        end;
       end;
       INC(mx);
       INC(x, TILE_SIZE);
@@ -262,29 +256,29 @@ begin
 end;
 
 procedure loadMap(filename : String);
-VAR i,x,y,le : integer;
-    filein : text;
+VAR i, x, y, le : integer;
+    FileIn : text;
     line : string;
 begin
-  x:=0;
-  assign (filein, filename);
-  {$i-}; reset(filein); {$i+};
+  x := 0;
+  assign (FileIn, filename);
+  {$i-}; reset(FileIn); {$i+};
   if IOresult = 0 then
   begin
     for y := 0 to PRED(MAP_HEIGHT) do
     begin
-      x:=0;
-      readln(filein,line);
-      line:=StringReplace(line, ' ','',[rfReplaceAll]);
-      le:=length(line);
+      x := 0;
+      readln(FileIn,line);
+      line := StringReplace(line, ' ','',[rfReplaceAll]);
+      le := length(line);
 
-      for i:=1 to le do
+      for  i:= 1 to le do
       begin
-        stage.map[x,y]:=ORD(line[i])-48;
+        stage.map[x,y] := ORD(line[i]) - 48;
         INC(x);
       end;
     end;
-    close(filein);
+    close(FileIn);
   end;
 end;
 
@@ -295,7 +289,7 @@ begin
   loadMap('data/map01.dat');
 end;
 
-// *****************   Stage  *****************
+// *****************   STAGE   *****************
 
 procedure draw_Game;
 begin
@@ -307,7 +301,6 @@ end;
 
 procedure logic_Game;
 begin
-  app.delegate.logic := Game;
   doPlayer;
   doCamera;
 end;
@@ -347,10 +340,10 @@ begin
   begin
     tex := app.textureHead^.next;
     app.textureHead^.next := tex^.next;
-    DEC(summ); DISPOSE(tex);
+    DISPOSE(tex);
     tex := tex^.next;
   end;
-  DISPOSE(app.TextureHead);   DEC(Summ);
+  DISPOSE(app.TextureHead);
 end;
 
 procedure cleanUp;
@@ -362,7 +355,7 @@ end;
 procedure AtExit;
 VAR i : byte;
 begin
-  for i := 1 to Max_Tiles do
+  for i := 1 to MAX_TILES do
     SDL_DestroyTexture (Tiles[i]);
 
   if ExitCode <> 0 then cleanUp;
@@ -376,32 +369,32 @@ begin
   SDL_ShowCursor(1);
 end;
 
-// *****************   Input  *****************
+// *****************   INPUT   *****************
 
 procedure doInput;
 begin
-  while SDL_PollEvent(@Event) = 1 do
+  while SDL_PollEvent(@event) = 1 do
   begin
-    CASE Event.Type_ of
+    CASE event.Type_ of
 
       SDL_QUITEV:          exitLoop := TRUE;        { close Window }
       SDL_MOUSEBUTTONDOWN: exitLoop := TRUE;        { if Mousebutton pressed }
 
       SDL_KEYDOWN: begin
-                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
-                       app.keyboard[Event.key.keysym.scancode] := 1;
+                     if ((event.key._repeat = 0) AND (event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
+                       app.keyboard[event.key.keysym.scancode] := 1;
                      if (app.keyboard[SDL_ScanCode_ESCAPE]) = 1 then exitLoop := TRUE;
                    end;   { SDL_Keydown }
 
       SDL_KEYUP:   begin
-                     if ((Event.key._repeat = 0) AND (Event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
-                       app.keyboard[Event.key.keysym.scancode] := 0;
+                     if ((event.key._repeat = 0) AND (event.key.keysym.scancode < MAX_KEYBOARD_KEYS)) then
+                       app.keyboard[event.key.keysym.scancode] := 0;
                    end;   { SDL_Keyup }
-    end;  { CASE Event }
+    end;  { CASE event }
   end;    { SDL_PollEvent }
 end;
 
-// *************   DELEGATE LOGIC   ***********
+// ***************   DELEGATE   ***************
 
 procedure delegate_logic(Wahl : TDelegating);
 begin
@@ -415,7 +408,7 @@ end;
 
 // *************   CAPFRAMERATE   *************
 
-procedure CapFrameRate(VAR remainder : double; VAR Ticks : UInt32); INLINE;
+procedure CapFrameRate(VAR remainder : Double; VAR Ticks : UInt32);
 VAR wait, FrameTime : longint;
 begin
   wait := 16 + TRUNC(remainder);
@@ -432,9 +425,8 @@ end;
 
 begin
   CLRSCR;
-  summ := 0;
   InitSDL;
-  InitStageListenPointer;
+  InitStage;
   InitMap;
   AddExitProc(@AtExit);
   exitLoop := FALSE;
@@ -443,12 +435,11 @@ begin
   begin
     prepareScene;
     doInput;
-    delegate_logic(app.delegate.logic);
+    delegate_logic(Game);
     presentScene;
     CapFrameRate(gRemainder, gTicks);
   end;
 
   cleanUp;
   AtExit;
-  writeln; writeln(summ);
 end.
