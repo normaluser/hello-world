@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ***************************************************************************
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
-* changed all PChar to String Types for better string handling!
+* changed all PChar to string Types for better string handling!
 ***************************************************************************}
 
 PROGRAM ppp02;
@@ -46,7 +46,7 @@ TYPE                                        { "T" short for "TYPE" }
                    end;
      PTextur     = ^TTexture;
      TTexture    = RECORD
-                     name : String;
+                     name : string;
                      texture : PSDL_Texture;
                      next : PTextur;
                    end;
@@ -67,12 +67,12 @@ VAR app        : TApp;
     event      : TSDL_EVENT;
     exitLoop   : BOOLEAN;
     gTicks     : UInt32;
-    gRemainder : Double;
+    gRemainder : double;
     tiles      : ARRAY[1..MAX_TILES] of PSDL_Texture;
 
 // *****************   UTIL   *****************
 
-procedure errorMessage(Message : String);
+procedure errorMessage(Message : string);
 begin
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,'Error Box',PChar(Message),NIL);
   HALT(1);
@@ -88,7 +88,7 @@ end;
 
 procedure doPlayer;
 begin
-  if ((app.keyboard[SDL_SCANCODE_A] = 1) or (app.keyboard[SDL_SCANCODE_LEFT] = 1)) then
+  if ((app.keyboard[SDL_SCANCODE_A] = 1) OR (app.keyboard[SDL_SCANCODE_LEFT] = 1)) then
     stage.camera.x := stage.camera.x - PLAYER_MOVE_SPEED;
 
   if ((app.keyboard[SDL_SCANCODE_D] = 1) OR (app.keyboard[SDL_SCANCODE_RIGHT] = 1)) then
@@ -131,7 +131,7 @@ end;
 
 // ****************   TEXTURE   ***************
 
-procedure addTextureToCache(LName : String; LTexture : PSDL_Texture);
+procedure addTextureToCache(LName : string; LTexture : PSDL_Texture);
 VAR cache : PTextur;
 begin
   NEW(cache);
@@ -142,7 +142,7 @@ begin
   cache^.next := NIL;
 end;
 
-function getTexture(name : String) : PSDL_Texture;
+function getTexture(name : string) : PSDL_Texture;
 VAR tf : PTextur;
 begin
   getTexture := NIL;
@@ -155,7 +155,7 @@ begin
   end;
 end;
 
-function loadTexture(Pfad : String) : PSDL_Texture;
+function loadTexture(Pfad : string) : PSDL_Texture;
 VAR tg : PSDL_Texture;
 begin
   tg := getTexture(Pfad);
@@ -191,7 +191,7 @@ end;
 
 procedure loadTiles;
 VAR i : integer;
-    filename : String;
+    filename : string;
 begin
   for i := 1 to MAX_TILES do
   begin
@@ -255,7 +255,7 @@ begin
   end;
 end;
 
-procedure loadMap(filename : String);
+procedure loadMap(filename : string);
 VAR i, x, y, le : integer;
     FileIn : text;
     line : string;
@@ -269,7 +269,7 @@ begin
     begin
       x := 0;
       readln(FileIn,line);
-      line := StringReplace(line, ' ','',[rfReplaceAll]);
+      line := stringReplace(line, ' ','',[rfReplaceAll]);
       le := length(line);
 
       for  i:= 1 to le do
@@ -352,7 +352,7 @@ begin
   if ExitCode <> 0 then WriteLn('CleanUp complete!');
 end;
 
-procedure AtExit;
+procedure atExit;
 VAR i : byte;
 begin
   for i := 1 to MAX_TILES do
@@ -396,7 +396,7 @@ end;
 
 // ***************   DELEGATE   ***************
 
-procedure delegate_logic(Wahl : TDelegating);
+procedure delegate_Logic(Wahl : TDelegating);
 begin
   CASE Wahl of
   Game : begin
@@ -408,7 +408,7 @@ end;
 
 // *************   CAPFRAMERATE   *************
 
-procedure CapFrameRate(VAR remainder : Double; VAR Ticks : UInt32);
+procedure CapFrameRate(VAR remainder : double; VAR Ticks : UInt32);
 VAR wait, FrameTime : longint;
 begin
   wait := 16 + TRUNC(remainder);
@@ -425,21 +425,21 @@ end;
 
 begin
   CLRSCR;
-  InitSDL;
-  InitStage;
-  InitMap;
-  AddExitProc(@AtExit);
+  initSDL;
+  initStage;
+  initMap;
+  addExitProc(@atExit);
   exitLoop := FALSE;
 
   while exitLoop = FALSE do
   begin
     prepareScene;
     doInput;
-    delegate_logic(Game);
+    delegate_Logic(Game);
     presentScene;
     CapFrameRate(gRemainder, gTicks);
   end;
 
   cleanUp;
-  AtExit;
+  atExit;
 end.

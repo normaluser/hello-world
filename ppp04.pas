@@ -20,9 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
 * changed all PChar to string Types for better string handling!
+* 2 Zeilen in move(e) auskommentiert... Fehler (?) suchen!!
 ***************************************************************************}
 
-PROGRAM ppp03;
+PROGRAM ppp04;
 
 {$COPERATORS OFF} {$mode FPC} {$H+}
 USES CRT, SDL2, SDL2_Image, SDL2_Mixer, Math, sysutils;
@@ -36,8 +37,12 @@ CONST SCREEN_WIDTH      = 1280;            { size of the grafic window }
       MAP_RENDER_WIDTH  = 20;
       MAP_RENDER_HEIGHT = 12;
       PLAYER_MOVE_SPEED = 6;
+
       MAX_KEYBOARD_KEYS = 350;
       MAX_SND_CHANNELS  = 16;
+      EF_NONE           = 0;
+      EF_WEIGHTLESS     = (2 << 0);   //2
+      EF_SOLID          = (2 << 1);   //4
 
 TYPE                                        { "T" short for "TYPE" }
      TDelegating = (Game);
@@ -91,10 +96,15 @@ begin
   HALT(1);
 end;
 
+function collision(x1, y1, w1, h1, x2, y2, w2, h2 : integer) : Boolean;
+begin
+  collision := (MAX(x1, x2) < MIN(x1 + w1, x2 + w2)) AND (MAX(y1, y2) < MIN(y1 + h1, y2 + h2));
+end;
+
 procedure InitEntity(VAR e : PEntity);
 begin
   e^.x := 0.0; e^.y := 0.0; e^.dx := 0.0; e^.dy := 0.0; e^.w := 0; e^.h := 0;
-  e^.isOnGround := FALSE; e^.texture := NIL; e^.next := NIL;
+  e^.isOnGround := FALSE; e^.texture := NIL; e^.flags := EF_NONE; e^.next := NIL;
 end;
 
 // *****************   DRAW   *****************
@@ -247,6 +257,7 @@ begin
   loadMap('data/map01.dat');
 end;
 
+
 // ***************   ENTITIES   ***************
 
 function isInsideMap(x, y : integer) : Boolean;
@@ -254,6 +265,91 @@ begin
   if ((x >= 0) AND (y >= 0) AND (x < MAP_WIDTH) AND (y < MAP_HEIGHT))
     then isInsideMap := TRUE     //1
     else isInsideMap := FALSE;   //0
+end;
+
+procedure addEntFromLine(line : string);
+VAR e : PEntity;
+    namen : string;
+    l, a, b : integer;
+begin
+  NEW(e);
+  initEntity(e);
+  stage.EntityTail^.next := e;
+  stage.EntityTail := e;
+  l := SScanf(line, '%s %d %d', [@namen, @a, @b]);
+  if namen = 'BLOCK' then
+  begin
+    e^.x := a; e^.y := b;
+    e^.texture := loadTexture('gfx/block.png');
+    SDL_QueryTexture(e^.texture, NIL, NIL, @e^.w, @e^.h);
+    e^.flags := EF_SOLID + EF_WEIGHTLESS;
+  end;
+end;
+
+procedure loadEnts(filename : string);
+VAR Datei: Text;               (* Dateizeiger *)
+    zeile : string;
+BEGIN
+  assign (Datei, filename);    (* Pfad festlegen *)
+  reset (Datei);               (* Datei zum Lesen oeffnen *)
+  REPEAT
+    readLn (Datei, zeile);     (* eine Zeile lesen *)
+    addEntFromLine(zeile);
+  UNTIL EOF (Datei);  (* Abbruch, wenn das Zeilenende erreicht ist; also wenn EOF TRUE liefert *)
+  close (Datei);      (* Datei schliessen *)
+end;
+
+procedure drawEntities;
+VAR e : PEntity;
+begin
+  e := stage.entityHead^.next;
+  while e <> NIL do
+  begin
+    blit(e^.texture, round(e^.x - stage.camera.x), Round(e^.y - stage.camera.y), 0);
+    e := e^.next;
+  end;
+end;
+
+procedure moveToEntities(e : PEntity; dx, dy : float);
+VAR other : PEntity;
+    adj : integer;
+begin
+  other := stage.entityHead^.next;
+  while other <> NIL do
+  begin
+    if ((other <> e) AND collision(Round(e^.x), Round(e^.y), Round(e^.w), Round(e^.h), Round(other^.x), Round(other^.y), Round(other^.w), Round(other^.h))) then
+    begin
+      if (other^.flags AND EF_SOLID) <> 0 then
+      begin
+        if (dy <> 0) then
+        begin
+          //adj = dy > 0 ? -e^.h : other^.h;
+          if dy > 0 then
+            adj := -e^.h
+          else
+            adj := other^.h;
+
+          e^.y := other^.y + adj;
+          e^.dy := 0;
+
+          if dy > 0 then e^.isOnGround := TRUE;
+        end;
+
+        if (dx <> 0) then
+        begin
+          //adj = dx > 0 ? -e^.w : other^.w;
+          if dx > 0 then
+            adj := -e^.w
+          else
+            adj := other^.w;
+
+          e^.x := other^.x + adj;
+          e^.dx := 0;
+        end;
+      end;
+    end;
+    other := other^.next;
+  end;
 end;
 
 procedure moveToWorld(e : PEntity; dx, dy : float);
@@ -322,11 +418,21 @@ end;
 
 procedure move(e : PEntity);
 begin
-  e^.dy := e^.dy + 1.5;
-  e^.dy := MAX(MIN(e^.dy, 18), -999);
+  if (NOT(e^.flags AND EF_WEIGHTLESS <> 0)) then
+  begin
+    e^.dy := e^.dy + 1.5;
+    e^.dy := MAX(MIN(e^.dy, 18), -999);
+  end;
   e^.isOnGround := FALSE;
+
+//  e^.x := e^.x + e^.dx;    { Fehler im Orginal ?? }
   moveToWorld(e, e^.dx, 0);
+  moveToEntities(e, e^.dx, 0);
+
+//  e^.y := e^.y + e^.dy;    { Fehler im Orginal ?? }
   moveToWorld(e, 0, e^.dy);
+  moveToEntities(e, 0, e^.dy);
+
   e^.x := MIN(MAX(e^.x, 0), MAP_WIDTH  * TILE_SIZE);
   e^.y := MIN(MAX(e^.y, 0), MAP_HEIGHT * TILE_SIZE);
 end;
@@ -343,19 +449,9 @@ begin
   end;
 end;
 
-procedure drawEntities;
-VAR e : PEntity;
-begin
-  e := stage.entityHead^.next;
-  while e <> NIL do
-  begin
-    blit(e^.texture, round(e^.x - stage.camera.x), Round(e^.y - stage.camera.y), 0);
-    e := e^.next;
-  end;
-end;
-
 procedure initEntities;
 begin
+  loadEnts('data/ents01.dat');
 end;
 
 // ****************   CAMERA   ****************
@@ -368,7 +464,7 @@ begin
   stage.camera.x := stage.camera.x - (SCREEN_WIDTH DIV 2);
   stage.camera.y := stage.camera.y - (SCREEN_HEIGHT DIV 2);
 
-  stage.camera.x := MIN(MAX(stage.camera.x, 0), (MAP_WIDTH * TILE_SIZE) - SCREEN_WIDTH);
+  stage.camera.x := MIN(MAX(stage.camera.x, 0), (MAP_WIDTH  * TILE_SIZE) - SCREEN_WIDTH);
   stage.camera.y := MIN(MAX(stage.camera.y, 0), (MAP_HEIGHT * TILE_SIZE) - SCREEN_HEIGHT);
 end;
 
@@ -405,7 +501,7 @@ begin
   initEntity(player);
   stage.EntityTail^.next := player;
   stage.EntityTail := player;
-  
+
   pete[0] := loadTexture('gfx/pete01.png');
   pete[1] := loadTexture('gfx/pete02.png');
 
@@ -457,6 +553,7 @@ begin
 
   initMap;
   initPlayer;
+  initEntities;
 end;
 
 // ***************   INIT SDL   ***************
@@ -469,7 +566,7 @@ begin
   if SDL_Init(SDL_INIT_VIDEO) < 0 then
     errorMessage(SDL_GetError());
 
-  app.Window := SDL_CreateWindow('Pete''s Pizza Party 3', SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, windowFlags);
+  app.Window := SDL_CreateWindow('Pete''s Pizza Party 4', SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, windowFlags);
   if app.Window = NIL then
     errorMessage(SDL_GetError());
 
@@ -572,10 +669,10 @@ end;
 procedure delegate_Logic(Wahl : TDelegating);
 begin
   CASE Wahl of
-    Game : begin
-             logic_Game;
-             draw_Game;
-           end;
+  Game : begin
+           logic_Game;
+           draw_Game;
+         end;
   end;
 end;
 
