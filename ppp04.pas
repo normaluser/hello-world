@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
 * changed all PChar to string Types for better string handling!
-* 2 Zeilen in move(e) auskommentiert... Fehler (?) suchen!!
 ***************************************************************************}
 
 PROGRAM ppp04;
@@ -310,7 +309,7 @@ begin
   end;
 end;
 
-procedure moveToEntities(e : PEntity; dx, dy : float);
+procedure moveToEntities(e : PEntity; dx, dy : double);
 VAR other : PEntity;
     adj : integer;
 begin
@@ -352,12 +351,11 @@ begin
   end;
 end;
 
-procedure moveToWorld(e : PEntity; dx, dy : float);
+procedure moveToWorld(e : PEntity; dx, dy : double);
 VAR mx, my, hit, adj : integer;
 begin
   if (dx <> 0) then
   begin
-    e^.x := e^.x + dx;
     //mx = dx > 0 ? (e->x + e->w) : e->x;
     if dx > 0 then mx := Round(e^.x + e^.w)
               else mx := Round(e^.x);
@@ -385,8 +383,6 @@ begin
 
   if (dy <> 0) then
   begin
-    e^.y := e^.y + dy;
-
     //my = dy > 0 ? (e^.y + e^.h) : e^.y;
     if dy > 0 then my := Round(e^.y + e^.h)
               else my := Round(e^.y);
@@ -425,11 +421,11 @@ begin
   end;
   e^.isOnGround := FALSE;
 
-//  e^.x := e^.x + e^.dx;    { Fehler im Orginal ?? }
+  e^.x := e^.x + e^.dx;
   moveToWorld(e, e^.dx, 0);
   moveToEntities(e, e^.dx, 0);
 
-//  e^.y := e^.y + e^.dy;    { Fehler im Orginal ?? }
+  e^.y := e^.y + e^.dy;
   moveToWorld(e, 0, e^.dy);
   moveToEntities(e, 0, e^.dy);
 

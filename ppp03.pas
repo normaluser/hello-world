@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -256,7 +256,7 @@ begin
     else isInsideMap := FALSE;   //0
 end;
 
-procedure moveToWorld(e : PEntity; dx, dy : float);
+procedure moveToWorld(e : PEntity; dx, dy : double);
 VAR mx, my, hit, adj : integer;
 begin
   if (dx <> 0) then
@@ -405,7 +405,7 @@ begin
   initEntity(player);
   stage.EntityTail^.next := player;
   stage.EntityTail := player;
-  
+
   pete[0] := loadTexture('gfx/pete01.png');
   pete[1] := loadTexture('gfx/pete02.png');
 
