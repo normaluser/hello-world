@@ -110,11 +110,8 @@ begin
   end
   else
   begin
-    dx := (x1 - x2);
-    dx := dx / steps;
-
-    dy := (y1 - y2);
-    dy := dy / steps;
+    dx := (x1 - x2) / steps;
+    dy := (y1 - y2) / steps;
   end;
 end;
 
