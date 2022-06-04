@@ -15,7 +15,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
 * changed all PChar to String Types for better String handling!
-* ERROR: Player fly over the platform; the delta-y equal to Platform_Speed
 ***************************************************************************}
 
 PROGRAM ppp05;
@@ -264,7 +263,8 @@ begin
       end;
     end;
     close(FileIn);
-  end;
+  end
+  else errorMessage(filename + ' not found!');
 end;
 
 procedure initMap;
@@ -364,12 +364,16 @@ VAR Datei: Text;               (* Dateizeiger *)
     zeile : string;
 BEGIN
   assign (Datei, filename);    (* Pfad festlegen *)
-  reset (Datei);               (* Datei zum Lesen oeffnen *)
-  REPEAT
-    readLn (Datei, zeile);     (* eine Zeile lesen *)
-    addEntFromLine(zeile);
-  UNTIL EOF (Datei);  (* Abbruch, wenn das Zeilenende erreicht ist; also wenn EOF TRUE liefert *)
-  close (Datei);      (* Datei schliessen *)
+  {$i-}; reset(Datei); {$i+};  (* Datei zum Lesen oeffnen *)
+  if IOResult = 0 then
+  begin
+    REPEAT
+      readLn (Datei, zeile);     (* eine Zeile lesen *)
+      addEntFromLine(zeile);
+    UNTIL EOF (Datei);  (* Abbruch, wenn das Zeilenende erreicht ist; also wenn EOF TRUE liefert *)
+    close (Datei);      (* Datei schliessen *)
+  end
+  else errorMessage(filename + ' not found!');
 end;
 
 procedure drawEntities;
@@ -664,9 +668,9 @@ begin
   stage.entityHead^.next := NIL;
   stage.entityTail := stage.entityHead;
 
-  initMap;
-  initPlayer;
   initEntities;
+  initPlayer;
+  initMap;
 end;
 
 // ***************   INIT SDL   ***************
