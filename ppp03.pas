@@ -214,7 +214,7 @@ begin
 end;
 
 procedure loadMap(filename : string);
-VAR i,x,y,le : integer;
+VAR i, x, y, le : integer;
     FileIn : text;
     line : string;
 begin
@@ -232,12 +232,13 @@ begin
 
       for i := 1 to le do
       begin
-        stage.map[x,y] := ORD(line[i])-48;
+        stage.map[x,y] := ORD(line[i]) - 48;
         INC(x);
       end;
     end;
     close(FileIn);
-  end;
+  end
+  else errorMessage(filename + ' not found!');
 end;
 
 procedure initMap;
@@ -455,8 +456,8 @@ begin
   stage.entityHead^.next := NIL;
   stage.entityTail := stage.entityHead;
 
-  initMap;
   initPlayer;
+  initMap;
 end;
 
 // ***************   INIT SDL   ***************

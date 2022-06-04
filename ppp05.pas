@@ -112,7 +112,7 @@ end;
 
 function collision(x1, y1, w1, h1, x2, y2, w2, h2 : integer) : Boolean;
 begin
-  collision := ((MAX(x1, x2) < MIN(x1 + w1, x2 + w2)) AND (MAX(y1, y2) < MIN(y1 + h1, y2 + h2)));
+  collision := (MAX(x1, x2) < MIN(x1 + w1, x2 + w2)) AND (MAX(y1, y2) < MIN(y1 + h1, y2 + h2));
 end;
 
 procedure InitEntity(VAR e : PEntity);
@@ -240,7 +240,7 @@ begin
 end;
 
 procedure loadMap(filename : string);
-VAR i,x,y,le : integer;
+VAR i, x, y, le : integer;
     FileIn : text;
     line : string;
 begin
@@ -474,7 +474,7 @@ begin
           e^.y := other^.y + adj;
           e^.dy := 0;
 
-          if dy >= 0 then
+          if dy > 0 then
           begin
             e^.isOnGround := TRUE;
             e^.riding := other;

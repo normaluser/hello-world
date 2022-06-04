@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -193,7 +193,7 @@ begin
 end;
 
 procedure loadMap(filename : string);
-VAR i,x,y,le : integer;
+VAR i, x, y, le : integer;
     FileIn : text;
     line : string;
 begin
@@ -204,19 +204,20 @@ begin
   begin
     for y := 0 to PRED(MAP_HEIGHT) do
     begin
-      x:=0;
+      x := 0;
       readln(FileIn,line);
-      line:=stringReplace(line, ' ','',[rfReplaceAll]);
-      le:=length(line);
+      line := stringReplace(line, ' ','',[rfReplaceAll]);
+      le := length(line);
 
-      for i:=1 to le do
+      for i := 1 to le do
       begin
-        stage.map[x,y]:=ORD(line[i])-48;
+        stage.map[x,y] := ORD(line[i]) - 48;
         INC(x);
       end;
     end;
     close(FileIn);
-  end;
+  end
+  else errorMessage(filename + ' not found!');
 end;
 
 procedure initMap;

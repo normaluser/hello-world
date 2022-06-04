@@ -223,7 +223,7 @@ begin
 end;
 
 procedure loadMap(filename : string);
-VAR i,x,y,le : integer;
+VAR i, x, y, le : integer;
     FileIn : text;
     line : string;
 begin
@@ -241,12 +241,13 @@ begin
 
       for i := 1 to le do
       begin
-        stage.map[x,y] := ORD(line[i])-48;
+        stage.map[x,y] := ORD(line[i]) - 48;
         INC(x);
       end;
     end;
     close(FileIn);
-  end;
+  end
+  else errorMessage(filename + ' not found!');
 end;
 
 procedure initMap;
@@ -290,12 +291,16 @@ VAR Datei: Text;               (* Dateizeiger *)
     zeile : string;
 BEGIN
   assign (Datei, filename);    (* Pfad festlegen *)
-  reset (Datei);               (* Datei zum Lesen oeffnen *)
-  REPEAT
-    readLn (Datei, zeile);     (* eine Zeile lesen *)
-    addEntFromLine(zeile);
-  UNTIL EOF (Datei);  (* Abbruch, wenn das Zeilenende erreicht ist; also wenn EOF TRUE liefert *)
-  close (Datei);      (* Datei schliessen *)
+  {$i-}; reset(Datei); {$i+};  (* Datei zum Lesen oeffnen *)
+  if IOResult = 0 then
+  begin
+    REPEAT
+      readLn (Datei, zeile);     (* eine Zeile lesen *)
+      addEntFromLine(zeile);
+    UNTIL EOF (Datei);  (* Abbruch, wenn das Zeilenende erreicht ist; also wenn EOF TRUE liefert *)
+    close (Datei);      (* Datei schliessen *)
+  end
+  else errorMessage(filename + ' not found!');
 end;
 
 procedure drawEntities;
@@ -547,9 +552,9 @@ begin
   stage.entityHead^.next := NIL;
   stage.entityTail := stage.entityHead;
 
-  initMap;
-  initPlayer;
   initEntities;
+  initPlayer;
+  initMap;
 end;
 
 // ***************   INIT SDL   ***************
