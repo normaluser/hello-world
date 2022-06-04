@@ -1,25 +1,21 @@
 {**************************************************************************
 Copyright (C) 2015-2018 Parallel Realities
-
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
-
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 See the GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
 ***************************************************************************
 converted from "C" to "Pascal" by Ulrich 2022
 ***************************************************************************
 * changed all PChar to String Types for better String handling!
+* ERROR: Player fly over the platform; the delta-y equal to Platform_Speed
 ***************************************************************************}
 
 PROGRAM ppp05;
@@ -99,14 +95,14 @@ begin
   HALT(1);
 end;
 
-procedure calcSlope(x1, y1, x2, y2 : integer; VAR dx, dy : double);
+procedure calcSlope(x1, y1, x2, y2 : double; VAR dx, dy : double);   { DX=DY => -1 oder 1 }
 VAR steps : integer;
 begin
-  steps := MAX(abs(x1 - x2), abs(y1 - y2));
+  steps := TRUNC(MAX(abs(x1 - x2), abs(y1 - y2)));
 
   if (steps = 0) then
   begin
-    dx := 0; dy := 0;
+    dx := 0.0; dy := 0.0;
   end
   else
   begin
@@ -117,7 +113,7 @@ end;
 
 function collision(x1, y1, w1, h1, x2, y2, w2, h2 : integer) : Boolean;
 begin
-  collision := (MAX(x1, x2) < MIN(x1 + w1, x2 + w2)) AND (MAX(y1, y2) < MIN(y1 + h1, y2 + h2));
+  collision := ((MAX(x1, x2) < MIN(x1 + w1, x2 + w2)) AND (MAX(y1, y2) < MIN(y1 + h1, y2 + h2)));
 end;
 
 procedure InitEntity(VAR e : PEntity);
@@ -302,18 +298,16 @@ procedure tick;
 begin
   if ((abs(selv^.x - selv^.sx) < PLATFORM_SPEED) AND (abs(selv^.y - selv^.sy) < PLATFORM_SPEED)) then
   begin
-    calcSlope(TRUNC(selv^.ex), TRUNC(selv^.ey), TRUNC(selv^.x), TRUNC(selv^.y), selv^.dx, selv^.dy);
-                                                                 // @ geloescht bei selv-dx, selv-dy
-    selv^.dx := selv^.dx * PLATFORM_SPEED;
-    selv^.dy := selv^.dy * PLATFORM_SPEED;
+    calcSlope(TRUNC(selv^.ex), TRUNC(selv^.ey), TRUNC(selv^.x), TRUNC(selv^.y), selv^.dx, selv^.dy); { Result: +1 oder -1 }
+    selv^.dx := selv^.dx * PLATFORM_SPEED;      { also +1 oder -1 multipliziert Platform_Speed }
+    selv^.dy := selv^.dy * PLATFORM_SPEED;      { also +1 oder -1 multipliziert Platform_Speed }
   end;
 
-  if ((abs(selv^.x - selv^.ex) < PLATFORM_SPEED) AND (abs(selv^.y - selv^.ey) < PLATFORM_SPEED)) then
+  if ((abs(selv^.x - selv^.ex) < PLATFORM_SPEED) AND (abs(selv^.y - selv^.ey) < PLATFORM_SPEED)) then { Result: +1 oder -1 }
   begin
     calcSlope(TRUNC(selv^.sx), TRUNC(selv^.sy), TRUNC(selv^.x), TRUNC(selv^.y), selv^.dx, selv^.dy);
-                                                                 // @ geloescht bei selv-dx, selv-dy
-    selv^.dx := selv^.dx * PLATFORM_SPEED;
-    selv^.dy := selv^.dy * PLATFORM_SPEED;
+    selv^.dx := selv^.dx * PLATFORM_SPEED;      { also +1 oder -1 multipliziert Platform_Speed }
+    selv^.dy := selv^.dy * PLATFORM_SPEED;      { also +1 oder -1 multipliziert Platform_Speed }
   end;
 end;
 
@@ -327,8 +321,8 @@ begin
   stage.EntityTail^.next := e;
   stage.EntityTail := e;
   l := SScanf(line, '%s %d %d %d %d', [@namen, @a, @b, @c, @d]);
-  e^.sx := a; e^.sy := b;     { sx, sy : Startx, Starty }
-  e^.ex := c; e^.ey := d;     { ex, ey : Endx,   Endy   }
+  e^.sx := a; e^.sy := b;     { sx, sy : StartX, StartY }
+  e^.ex := c; e^.ey := d;     { ex, ey : EndX,   EndY   }
 
   e^.x := e^.sx;
   e^.y := e^.sy;
@@ -394,7 +388,7 @@ VAR mx, my, hit, adj : integer;
 begin
   if (dx <> 0) then
   begin
-    //mx = dx > 0 ? (e->x + e->w) : e->x;
+    //ORG C-Code: mx = dx > 0 ? (e->x + e->w) : e->x;
     if dx > 0 then mx := TRUNC(e^.x + e^.w)
               else mx := TRUNC(e^.x);
     mx := mx DIV TILE_SIZE;
@@ -411,7 +405,7 @@ begin
 
     if hit = 1 then
     begin
-      //adj = dx > 0 ? -e^.w : TILE_SIZE
+      ///ORG-C Code: adj = dx > 0 ? -e^.w : TILE_SIZE
       if dx > 0 then adj := -e^.w
                 else adj := TILE_SIZE;
       e^.x := (mx * TILE_SIZE) + adj;
@@ -421,7 +415,7 @@ begin
 
   if (dy <> 0) then
   begin
-    //my = dy > 0 ? (e^.y + e^.h) : e^.y;
+    ///ORG C-Code: my = dy > 0 ? (e^.y + e^.h) : e^.y;
     if dy > 0 then my := TRUNC(e^.y + e^.h)
               else my := TRUNC(e^.y);
     my := my DIV TILE_SIZE;
@@ -438,13 +432,13 @@ begin
 
     if (hit = 1) then
     begin
-      //adj = dy > 0 ? -e^.h : TILE_SIZE;
+      //ORG C-Code: adj = dy > 0 ? -e^.h : TILE_SIZE;
       if dy > 0 then adj := -e^.h
                 else adj := TILE_SIZE;
       e^.y := (my * TILE_SIZE) + adj;
       e^.dy := 0;
 
-      //e^.isOnGround = dy > 0;
+      //ORG C-Code: e^.isOnGround = dy > 0;
       if dy > 0 then e^.isOnGround := TRUE;
     end;
   end;
@@ -467,7 +461,7 @@ begin
       begin
         if (dy <> 0) then
         begin
-          //adj = dy > 0 ? -e^.h : other^.h;
+          //ORG C-Code: adj = dy > 0 ? -e^.h : other^.h;
           if dy > 0 then
             adj := -e^.h
           else
@@ -476,7 +470,7 @@ begin
           e^.y := other^.y + adj;
           e^.dy := 0;
 
-          if dy > 0 then
+          if dy >= 0 then
           begin
             e^.isOnGround := TRUE;
             e^.riding := other;
@@ -485,7 +479,7 @@ begin
 
         if (dx <> 0) then
         begin
-          //adj = dx > 0 ? -e^.w : other^.w;
+          //ORG C-Code: adj = dx > 0 ? -e^.w : other^.w;
           if dx > 0 then
             adj := -e^.w
           else
@@ -559,8 +553,8 @@ begin
       push(e, e^.riding^.dx, 0);
     end;
 
-    e^.x := MIN(MAX(TRUNC(e^.x), 0), (MAP_WIDTH  * TILE_SIZE));
-    e^.y := MIN(MAX(TRUNC(e^.y), 0), (MAP_HEIGHT * TILE_SIZE));
+    e^.x := MIN(MAX(e^.x, 0), (MAP_WIDTH  * TILE_SIZE));
+    e^.y := MIN(MAX(e^.y, 0), (MAP_HEIGHT * TILE_SIZE));
     e := e^.next;
   end;
 end;
