@@ -186,7 +186,7 @@ begin
     Mix_FreeMusic(music);
     music := NIL;
   end;
-  music := Mix_LoadMUS(Pchar(filename));
+  music := Mix_LoadMUS(PChar(filename));
   if music = NIL then errorMessage('Music:"' + filename + '" not found!');
   Mix_VolumeMusic(MIX_MAX_VOLUME);
 end;
@@ -314,7 +314,7 @@ begin
 end;
 
 procedure loadMap(filename : string);
-VAR i,x,y,le : integer;
+VAR i, x, y, le : integer;
     FileIn : text;
     line : string;
 begin
@@ -332,7 +332,7 @@ begin
 
       for i := 1 to le do
       begin
-        stage.map[x,y] := ORD(line[i])-48;
+        stage.map[x,y] := ORD(line[i]) - 48;
         INC(x);
       end;
     end;
@@ -432,6 +432,7 @@ end;
 
 procedure tick_Pizza;
 begin
+  if selv^.value > 100 then selv^.value := 0;
   selv^.value := selv^.value + 0.1;
 
   selv^.y := selv^.y + sin(selv^.value);
@@ -471,7 +472,7 @@ end;
 procedure addEntFromLine(line : string);
 VAR e : PEntity;
     namen : string;
-    l, a, b : integer;
+    l : integer;
 begin
   l := SScanf(line, '%s', [@namen]);
   if namen = 'BLOCK' then
@@ -631,7 +632,7 @@ begin
         other^.y := other^.y + e^.dy;
         push(other, 0, e^.dy);
       end;
-      if e^.touch1 then    //###############################################
+      if e^.touch1 then
         touch(other);
     end;
     other := other^.next;
@@ -673,7 +674,7 @@ begin
   while e <> NIL do
   begin
     selv := e;
-    if e^.tick1 then tick_PLatform;
+    if e^.tick1 then tick_Platform;
     if e^.tick2 then tick_Pizza;
     move(e);
     if (e^.health <= 0) then
@@ -810,8 +811,8 @@ end;
 function numberfill(a : integer) : String;
 VAR FMT : String;
 begin
-  Fmt := '[%.1d]';                  { Fmt: arguments for Format }
-  numberfill := Format(Fmt, [a]);   { Format: format a String with given arguments (=> Fmt) }
+  Fmt := '[%d]';                   { Fmt: arguments for Format }
+  numberfill := Format(Fmt,[a]);   { Format: format a String with given arguments (=> Fmt) }
 end;
 
 procedure initFonts;
@@ -834,7 +835,8 @@ begin
   SDL_RenderFillRect(app.renderer, @r);
   SDL_SetRenderDrawBlendMode(app.renderer, SDL_BLENDMODE_NONE);
 
-  drawText(SCREEN_WIDTH - 5, 5, 255, 255, 255, TEXT_RIGHT, 'PIZZA ' + numberfill(stage.pizzaFound) + '/' + numberfill(stage.pizzaTotal));
+  //drawText(SCREEN_WIDTH - 5, 5, 255, 255, 255, TEXT_RIGHT, 'PIZZA ' + numberfill(stage.pizzaFound) + '/' + numberfill(stage.pizzaTotal));
+  drawText(SCREEN_WIDTH - 5, 5, 255, 255, 255, TEXT_RIGHT, 'PIZZA ' + intToStr(stage.pizzaFound) + '/' + intToStr(stage.pizzaTotal));
 end;
 
 procedure draw_Game;
