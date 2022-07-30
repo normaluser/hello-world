@@ -328,14 +328,6 @@ begin
   Ticks := SDL_GetTicks;
 end;
 
-// *************   DELEGATE LOGIC   ***********
-
-procedure delegate_logic;
-begin
-  app.Delegate.Logic := @logic_Game;
-  app.Delegate.Draw  := @draw_Game;
-end;
-
 // *****************   MAIN   *****************
 
 begin
@@ -346,7 +338,6 @@ begin
   exitLoop := FALSE;
   gTicks := SDL_GetTicks;
   gRemainder := 0;
-  delegate_logic;
 
   while exitLoop = FALSE do
   begin
